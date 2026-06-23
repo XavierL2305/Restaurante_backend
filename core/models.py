@@ -20,6 +20,8 @@ class Usuarios(models.Model):
     email = models.CharField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)    
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    def get_old_instance(self):
+        return Mesas.objects.get(pk=self.pk)
     class Meta:
         db_table = 'Usuarios'
 
@@ -31,12 +33,16 @@ class Mesas(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     numero_mesa = models.IntegerField()
     estatus = models.CharField(max_length=20, choices = ESTATUS_CHOICES)
+    def get_old_instance(self):
+        return Mesas.objects.get(pk=self.pk)
     class Meta:
         db_table = 'Mesas'
 
 class Categorias(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     nombre = models.CharField(max_length=100)
+    def get_old_instance(self):
+        return Mesas.objects.get(pk=self.pk)
     class Meta:
         db_table = 'Categorias'
 
@@ -46,6 +52,8 @@ class Productos(models.Model):
     descripcion = models.TextField()
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     categoria_fk = models.ForeignKey(Categorias, on_delete=models.CASCADE)
+    def get_old_instance(self):
+        return Mesas.objects.get(pk=self.pk)
     class Meta:
         db_table = 'Productos'
 
@@ -64,5 +72,7 @@ class Ordenes(models.Model):
     estatus = models.CharField(max_length=20, choices=ESTATUS_CHOICES)
     monto_total = models.DecimalField(max_digits=10, decimal_places=2)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    def get_old_instance(self):
+        return Mesas.objects.get(pk=self.pk)
     class Meta:
         db_table = 'Ordenes'
