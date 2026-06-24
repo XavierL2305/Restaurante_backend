@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import validate_email
 import uuid
 
 # Create your models here.
@@ -17,9 +18,10 @@ class Usuarios(models.Model):
     )
     nombre = models.CharField(max_length=100)
     apellido = models.CharField(max_length=100)
-    email = models.CharField(unique=True)
+    email = models.EmailField(max_length = 255, unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)    
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    imagen = models.ImageField(upload_to='usuarios_media', null=True, blank=True)
     def get_old_instance(self):
         return Mesas.objects.get(pk=self.pk)
     class Meta:
@@ -52,6 +54,7 @@ class Productos(models.Model):
     descripcion = models.TextField()
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     categoria_fk = models.ForeignKey(Categorias, on_delete=models.CASCADE)
+    imagen = models.ImageField(upload_to='productos_media/', null=True, blank=True)
     def get_old_instance(self):
         return Mesas.objects.get(pk=self.pk)
     class Meta:
