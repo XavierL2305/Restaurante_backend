@@ -1,27 +1,27 @@
 from rest_framework import serializers
-from .models import Usuarios, Mesas, Ordenes, Productos, Categorias
+from .models import usuarios, mesas, ordenes, productos, categorias
 
 class UsuariosSerializado(serializers.ModelSerializer):
     class Meta:
-        model = Usuarios
+        model = usuarios
         fields = '__all__'
 
 class MesasSerializado(serializers.ModelSerializer):
     class Meta:
-        model = Mesas
+        model = mesas
         fields = '__all__'
 
 class OrdenesSerializado(serializers.ModelSerializer):
     class Meta:
-        model = Ordenes
+        model = ordenes
         fields = '__all__'
 
 class ProductosSerializado(serializers.ModelSerializer):
     class Meta:
-        model = Productos
+        model = productos
         fields = '__all__'
 
 class CategoriasSerializado(serializers.ModelSerializer):
     class Meta:
-        model = Categorias
+        model = categorias
         fields = '__all__'

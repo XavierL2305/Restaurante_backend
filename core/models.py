@@ -4,7 +4,7 @@ import uuid
 
 # Create your models here.
 
-class Usuarios(models.Model):
+class usuarios(models.Model):
     ROLE_CHOICES = [
         ('cliente', 'Cliente'), 
         ('mesero', 'Mesero'), 
@@ -23,11 +23,11 @@ class Usuarios(models.Model):
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     imagen = models.ImageField(upload_to='usuarios_media', null=True, blank=True)
     def get_old_instance(self):
-        return Mesas.objects.get(pk=self.pk)
+        return mesas.objects.get(pk=self.pk)
     class Meta:
-        db_table = 'Usuarios'
+        db_table = 'usuarios'
 
-class Mesas(models.Model):
+class mesas(models.Model):
     ESTATUS_CHOICES = [
         ('disponible','Disponible'),
         ('ocupado','Ocupado')
@@ -36,31 +36,31 @@ class Mesas(models.Model):
     numero_mesa = models.IntegerField()
     estatus = models.CharField(max_length=20, choices = ESTATUS_CHOICES)
     def get_old_instance(self):
-        return Mesas.objects.get(pk=self.pk)
+        return mesas.objects.get(pk=self.pk)
     class Meta:
-        db_table = 'Mesas'
+        db_table = 'mesas'
 
-class Categorias(models.Model):
+class categorias(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     nombre = models.CharField(max_length=100)
     def get_old_instance(self):
-        return Mesas.objects.get(pk=self.pk)
+        return mesas.objects.get(pk=self.pk)
     class Meta:
-        db_table = 'Categorias'
+        db_table = 'categorias'
 
-class Productos(models.Model):
+class productos(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     nombre = models.CharField(max_length=200)
     descripcion = models.TextField()
     precio = models.DecimalField(max_digits=10, decimal_places=2)
-    categoria_fk = models.ForeignKey(Categorias, on_delete=models.CASCADE)
+    categoria_fk = models.ForeignKey(categorias, on_delete=models.CASCADE)
     imagen = models.ImageField(upload_to='productos_media/', null=True, blank=True)
     def get_old_instance(self):
-        return Mesas.objects.get(pk=self.pk)
+        return mesas.objects.get(pk=self.pk)
     class Meta:
-        db_table = 'Productos'
+        db_table = 'productos'
 
-class Ordenes(models.Model):
+class ordenes(models.Model):
     ESTATUS_CHOICES = [
         ('pidiendo', 'Pidiendo'),
         ('cocinando', 'Cocinando'),
@@ -70,12 +70,12 @@ class Ordenes(models.Model):
         ('pagado', 'Pagado')
     ]
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
-    mesa_fk = models.ForeignKey(Mesas, on_delete=models.CASCADE)
-    usuario_fk = models.ForeignKey(Usuarios, on_delete=models.CASCADE)
+    mesa_fk = models.ForeignKey(mesas, on_delete=models.CASCADE)
+    usuario_fk = models.ForeignKey(usuarios, on_delete=models.CASCADE)
     estatus = models.CharField(max_length=20, choices=ESTATUS_CHOICES)
     monto_total = models.DecimalField(max_digits=10, decimal_places=2)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     def get_old_instance(self):
-        return Mesas.objects.get(pk=self.pk)
+        return mesas.objects.get(pk=self.pk)
     class Meta:
-        db_table = 'Ordenes'
+        db_table = 'ordenes'
