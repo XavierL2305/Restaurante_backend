@@ -1,10 +1,9 @@
 from django.db import models
-from django.core.validators import validate_email
 import uuid
-
+from django.contrib.auth.models import AbstractUser
 # Create your models here.
 
-class usuarios(models.Model):
+class usuarios(AbstractUser):
     ROLE_CHOICES = [
         ('cliente', 'Cliente'), 
         ('mesero', 'Mesero'), 
@@ -16,14 +15,9 @@ class usuarios(models.Model):
         default=uuid.uuid4,
         editable=False
     )
-    nombre = models.CharField(max_length=100)
-    apellido = models.CharField(max_length=100)
-    email = models.EmailField(max_length = 255, unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)    
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     imagen = models.ImageField(upload_to='usuarios_media', null=True, blank=True)
-    def get_old_instance(self):
-        return mesas.objects.get(pk=self.pk)
     class Meta:
         db_table = 'usuarios'
 
@@ -79,3 +73,4 @@ class ordenes(models.Model):
         return mesas.objects.get(pk=self.pk)
     class Meta:
         db_table = 'ordenes'
+
