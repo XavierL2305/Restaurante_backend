@@ -71,16 +71,16 @@ class ordenes(models.Model):
     estatus = models.CharField(max_length=20, choices=ESTATUS_CHOICES, default='pidiendo')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     mesa_fk = models.ForeignKey(mesas, on_delete=models.CASCADE)
-    monto_total = models.DecimalField(max_digits=10, decimal_places=2)
+    monto_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     mesero =models.ForeignKey(
         usuarios,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE, # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
         related_name='ordenes_asignadas',
         limit_choices_to={'role':'mesero'},
     )
     cliente = models.ForeignKey(
         usuarios,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE, # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
         related_name='mis_ordenes',
         limit_choices_to={'role':'cliente'}
     )
@@ -92,7 +92,11 @@ class ordenes(models.Model):
 
 class detallesOrdenes(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    producto_fk = models.ForeignKey(productos, on_delete=models.PROTECT, related_name='detalles_en_ordenes')
+    producto_fk = models.ForeignKey(
+        productos, 
+        on_delete=models.CASCADE, # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
+        related_name='detalles_en_ordenes'
+    )
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     cantidad = models.PositiveIntegerField(default=1)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
@@ -102,6 +106,10 @@ class detallesOrdenes(models.Model):
     def save(self, *args, **kwargs):
         self.subtotal = self.cantidad * self.precio
         super().save(*args, **kwargs)
+        total_actualizado = sum(detalle.subtotal for detalle in self.orden_fk.detalles.all())
+        
+        self.orden_fk.monto_total = total_actualizado
+        self.orden_fk.save()
     def __str__(self):
         return f"{self.cantidad} x {self.precio}... - Orden: {str(self.orden_fk.id)[:8]}"
 
@@ -111,8 +119,14 @@ class comentarios(models.Model):
     likes = models.IntegerField(default=0)
     imagen = models.ImageField(upload_to='comentarios_media/', blank=True, null=True)
     estatus = models.BooleanField(default=True)
-    usuario_fk = models.ForeignKey(usuarios, on_delete=models.PROTECT)
-    producto_fk = models.ForeignKey(productos, on_delete=models.PROTECT)
+    usuario_fk = models.ForeignKey(
+        usuarios, 
+        on_delete=models.CASCADE # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
+    )
+    producto_fk = models.ForeignKey(
+        productos, 
+        on_delete=models.CASCADE # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
+    )
     class Meta:
         db_table = 'comentarios'
     def __str__(self):

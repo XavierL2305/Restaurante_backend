@@ -1,4 +1,10 @@
 from django.core.management.base import BaseCommand
+import os
+import django
+from decimal import Decimal
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+django.setup()
 from core.models import categorias, productos, mesas, usuarios, comentarios, ordenes, detallesOrdenes
 
 class Command(BaseCommand):
@@ -8,10 +14,10 @@ class Command(BaseCommand):
         self.stdout.write('Borrando datos anteriores')
         # usuarios.objects.all().delete()
         categorias.objects.all().delete()
-        productos.objects.all().delete()
         mesas.objects.all().delete()
         usuarios.objects.all().delete()
         ordenes.objects.all().delete()
+        productos.objects.all().delete()
 
         self.stdout.write('Creando categorías...')
         cat1 = categorias.objects.create(nombre='Platos Fuertes')
@@ -19,49 +25,49 @@ class Command(BaseCommand):
         cat3 = categorias.objects.create(nombre='Postres')
 
         self.stdout.write('Cargando Productos con sus categorías')
-        productos.objects.create(
+        prod1 = productos.objects.create(
             nombre= 'Enzalada de frutas', 
             descripcion=self.detalles, 
             precio=17.99, 
             categoria_fk=cat1,
             imagen='productos/175.webp'
         )
-        productos.objects.create(
+        prod2 = productos.objects.create(
             nombre= 'Pasta con champiñones', 
             descripcion=self.detalles, 
             precio=22.1, 
             categoria_fk=cat1,
             imagen='productos/178.webp'
         )
-        productos.objects.create(
+        prod3 = productos.objects.create(
             nombre= 'Pasta con champiñones', 
             descripcion=self.detalles, 
             precio=9.1, 
             categoria_fk=cat1,
             imagen='productos/178.webp'
         )
-        productos.objects.create(
+        prod4 = productos.objects.create(
             nombre= 'Pizza Italiana', 
             descripcion=self.detalles, 
             precio=10.1, 
             categoria_fk=cat1,
             imagen='productos/180.webp'
         )
-        productos.objects.create(
+        prod5 = productos.objects.create(
             nombre= 'Pizza Napolitana', 
             descripcion=self.detalles, 
             precio=15.1, 
             categoria_fk=cat1,
             imagen='productos/180.webp'
         )
-        productos.objects.create(
+        prod6 = productos.objects.create(
             nombre= 'Costilla', 
             descripcion=self.detalles, 
             precio=10.1, 
             categoria_fk=cat1,
             imagen='productos/189.webp'
         )
-        productos.objects.create(
+        prod7 = productos.objects.create(
             nombre= 'Hamburguesa', 
             descripcion=self.detalles, 
             precio=8, 
@@ -69,49 +75,49 @@ class Command(BaseCommand):
             imagen='productos/186.webp'
         )
         # Bebidas
-        productos.objects.create(
+        prod8 = productos.objects.create(
             nombre= 'Café con leche', 
             descripcion=self.detalles, 
             precio=5.5, 
             categoria_fk=cat2,
             imagen='productos/1.webp'
         )
-        productos.objects.create(
+        prod9 = productos.objects.create(
             nombre= 'Café con leche', 
             descripcion=self.detalles, 
             precio=5.5, 
             categoria_fk=cat2,
             imagen='productos/1.webp'
         )
-        productos.objects.create(
+        prod10 = productos.objects.create(
             nombre= 'Campagne', 
             descripcion=self.detalles, 
             precio=20.8, 
             categoria_fk=cat2,
             imagen='productos/2.webp'
         )
-        productos.objects.create(
+        prod11 = productos.objects.create(
             nombre= 'Bebidas mixtas', 
             descripcion=self.detalles, 
             precio=10, 
             categoria_fk=cat2,
             imagen='productos/3.webp'
         )
-        productos.objects.create(
+        prod12 = productos.objects.create(
             nombre= 'Bebidas calientes mixtas', 
             descripcion=self.detalles, 
             precio=15.1, 
             categoria_fk=cat2,
             imagen='productos/4.webp'
         )
-        productos.objects.create(
+        prod13 = productos.objects.create(
             nombre= 'Vino', 
             descripcion=self.detalles, 
             precio=6, 
             categoria_fk=cat2,
             imagen='productos/6.webp'
         )
-        productos.objects.create(
+        prod14 = productos.objects.create(
             nombre= 'Frappe', 
             descripcion=self.detalles, 
             precio=7, 
@@ -119,7 +125,7 @@ class Command(BaseCommand):
             imagen='productos/7.webp'
         )
         # Postres
-        productos.objects.create(
+        prod15 = productos.objects.create(
             nombre= 'Postre', 
             descripcion=self.detalles, 
             precio=9, 
@@ -128,12 +134,12 @@ class Command(BaseCommand):
         )
 
         self.stdout.write('Creando mesas...')
-        cat1 = mesas.objects.create(numero_mesa=1, estatus = 'ocupado')
-        cat2 = mesas.objects.create(numero_mesa=2, estatus = 'disponible')
-        cat3 = mesas.objects.create(numero_mesa=3, estatus = 'ocupado')
-        cat3 = mesas.objects.create(numero_mesa=4, estatus = 'disponible')
-        cat3 = mesas.objects.create(numero_mesa=5, estatus = 'ocupado')
-        cat3 = mesas.objects.create(numero_mesa=6, estatus = 'disponible')
+        mes1 = mesas.objects.create(numero_mesa=1, estatus = 'ocupado')
+        mes2 = mesas.objects.create(numero_mesa=2, estatus = 'disponible')
+        mes3 = mesas.objects.create(numero_mesa=3, estatus = 'ocupado')
+        mes4 = mesas.objects.create(numero_mesa=4, estatus = 'disponible')
+        mes5 = mesas.objects.create(numero_mesa=5, estatus = 'ocupado')
+        mes6 = mesas.objects.create(numero_mesa=6, estatus = 'disponible')
 
         self.stdout.write('Creando usuarios...')
         us1 = usuarios.objects.create(
@@ -162,7 +168,6 @@ class Command(BaseCommand):
         )
         us2.set_password('Cooper245678')
         us2.save()
-
         us3 = usuarios.objects.create(
             is_superuser = False,
             username = 'XavierL',
@@ -176,7 +181,6 @@ class Command(BaseCommand):
         )
         us3.set_password('XavierL123456')
         us3.save()
-
         us4 = usuarios.objects.create(
             is_superuser = False,
             username = 'IsRam',
@@ -190,7 +194,6 @@ class Command(BaseCommand):
         )
         us4.set_password('isRam200026')
         us4.save()
-
         us5 = usuarios.objects.create(
             is_superuser = False,
             username = 'Asvg18',
@@ -208,6 +211,129 @@ class Command(BaseCommand):
 
         # Categorias ya, productos ya mesas ya usuarios ya
         # Falta comentarios ordenes detallesOrdenes
+        self.stdout.write('Creando las ordenes...')
+        ordn1 = ordenes.objects.create(
+            estatus='pidiendo', 
+            mesa_fk=mes1,
+            monto_total = Decimal('0.00'),
+            mesero = us2,
+            cliente = us1
+        )
+        ordn2 = ordenes.objects.create(
+            estatus='cocinando', 
+            mesa_fk=mes3,
+            monto_total = Decimal('0.00'),
+            mesero = us2,
+            cliente = us5
+        )
+        ordn3 = ordenes.objects.create(
+            estatus='entregado', 
+            mesa_fk=mes5,
+            monto_total = Decimal('0.00'),
+            mesero = us2,
+            cliente = us4
+        )
 
+        self.stdout.write('Creando los detalles de las ordenes...')
+        detallesOrdenes.objects.create(
+            producto_fk = prod1,
+            precio = Decimal(prod1.precio),
+            cantidad = 3,
+            orden_fk = ordn1
+        )
+        detallesOrdenes.objects.create(
+            producto_fk = prod2,
+            precio = Decimal(prod2.precio),
+            cantidad = 2,
+            orden_fk = ordn1
+        )
+        detallesOrdenes.objects.create(
+            producto_fk = prod15,
+            precio = Decimal(prod15.precio),
+            cantidad = 1,
+            orden_fk = ordn1
+        )
+
+        detallesOrdenes.objects.create(
+            producto_fk = prod4,
+            precio = Decimal(prod4.precio),
+            cantidad = 4,
+            orden_fk = ordn2
+        )
+        detallesOrdenes.objects.create(
+            producto_fk = prod7,
+            precio = Decimal(prod7.precio),
+            cantidad = 2,
+            orden_fk = ordn2
+        )
+        detallesOrdenes.objects.create(
+            producto_fk = prod14,
+            precio = Decimal(prod14.precio),
+            cantidad = 5,
+            orden_fk = ordn2
+        )
+        detallesOrdenes.objects.create(
+            producto_fk = prod15,
+            precio = Decimal(prod15.precio),
+            cantidad = 1,
+            orden_fk = ordn2
+        )
+
+        detallesOrdenes.objects.create(
+            producto_fk = prod6,
+            precio = Decimal(prod6.precio),
+            cantidad = 6,
+            orden_fk = ordn3
+        )
+        detallesOrdenes.objects.create(
+            producto_fk = prod8,
+            precio = Decimal(prod8.precio),
+            cantidad = 10,
+            orden_fk = ordn3
+        )
+
+        self.stdout.write('Creando comentarios...')
+        comentarios.objects.create(
+            descripcion = 'Me encanta esta comida, excelente calidad',
+            likes = int(25),
+            estatus = True,
+            usuario_fk = us2,
+            producto_fk = prod1
+        )
+        comentarios.objects.create(
+            descripcion = 'Sabroso el postre de fresas, nunca había probado algo igual',
+            likes = int(40),
+            estatus = True,
+            usuario_fk = us3,
+            producto_fk = prod15
+        )
+        comentarios.objects.create(
+            descripcion = 'De lo mejor que probado en mucho tiempo',
+            likes = int(10),
+            estatus = True,
+            usuario_fk = us3,
+            producto_fk = prod5
+        )
+        comentarios.objects.create(
+            descripcion = 'Buenisimo, recomendado',
+            likes = int(5),
+            estatus = True,
+            usuario_fk = us3,
+            producto_fk = prod6
+        )
+        comentarios.objects.create(
+            descripcion = 'Espectacular',
+            likes = int(7),
+            estatus = True,
+            usuario_fk = us4,
+            producto_fk = prod8
+        )
+        comentarios.objects.create(
+            descripcion = 'Totalmente recomendado',
+            likes = int(11),
+            estatus = True,
+            usuario_fk = us5,
+            producto_fk = prod12
+        )
 
         self.stdout.write(self.style.SUCCESS('Base de datos lista con informacion'))
