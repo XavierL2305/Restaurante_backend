@@ -12,7 +12,6 @@ class UsuariosSerializado(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'role',
-            'fecha_creacion',
             'imagen',
             'is_active'
         ]
