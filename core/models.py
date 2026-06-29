@@ -20,11 +20,18 @@ class usuarios(AbstractUser):
     imagen = models.ImageField(upload_to='usuarios_media', null=True, blank=True)
     class Meta:
         db_table = 'usuarios'
+    def delete(self, *args, **kwargs):
+        self.estatus = False
+        self.save()
+    def restaurar(self):
+        self.estatus = True
+        self.save()
     def __str__(self):
         return f"Usuario {str(self.id)[:8]}:{self.first_name} {self.last_name}"
 
 class mesas(models.Model):
     ESTATUS_CHOICES = [
+        ('eliminado'),('Eliminado'),
         ('disponible','Disponible'),
         ('ocupado','Ocupado')
     ]
@@ -33,6 +40,12 @@ class mesas(models.Model):
     estatus = models.CharField(max_length=20, choices = ESTATUS_CHOICES, default='disponible')
     class Meta:
         db_table = 'mesas'
+    def delete(self, *args, **kwargs):
+        self.estatus = 'eliminado'
+        self.save()
+    def restaurar(self):
+        self.estatus = 'disponible'
+        self.save()
     def __str__(self):
         return f"Mesa {str(self.id)[:8]}:{self.numero_mesa}"
 
@@ -42,6 +55,12 @@ class categorias(models.Model):
     estatus = models.BooleanField(default=True)
     class Meta:
         db_table = 'categorias'
+    def delete(self, *args, **kwargs):
+        self.estatus = False
+        self.save()
+    def restaurar(self):
+        self.estatus = True
+        self.save()
     def __str__(self):
         return f"Categoria {str(self.id)[:8]}:{self.nombre}"
 
@@ -55,11 +74,19 @@ class productos(models.Model):
     imagen = models.ImageField(upload_to='productos_media/', null=True, blank=True)
     class Meta:
         db_table = 'productos'
+    def delete(self, *args, **kwargs):
+        self.estatus = False
+        self.save()
+    def restaurar(self):
+        self.estatus = True
+        self.save()
     def __str__(self):
         return f"Producto {self.id}...- Categoria {str(self.categoria_fk.id)[8]}:{str(self.categoria_fk.nombre)}"
 
 class ordenes(models.Model):
     ESTATUS_CHOICES = [
+        ('eliminado'),('Eliminado'),
+        ('hablitado'),('Habilitado'),
         ('pidiendo', 'Pidiendo'),
         ('cocinando', 'Cocinando'),
         ('finalizado', 'Finalizado'),
@@ -87,6 +114,12 @@ class ordenes(models.Model):
     class Meta:
         db_table = 'ordenes'
         ordering = ['-fecha_creacion']
+    def delete(self, *args, **kwargs):
+        self.estatus = 'eliminado'
+        self.save()
+    def restaurar(self):
+        self.estatus = 'habilitado'
+        self.save()
     def __str__(self):
         return f"Orden {str(self.id)[:8]}... - Mesa {str(self.mesa_fk.id)[:8]}: {str(self.mesa_fk)}... - Mesero {str(self.mesero.id)[:8]}: {self.mesero.first_name} {self.mesero.last_name}... - Cliente {str(self.cliente.id)[:8]}: {self.cliente.first_name} {self.cliente.last_name}"
 
@@ -100,9 +133,16 @@ class detallesOrdenes(models.Model):
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     cantidad = models.PositiveIntegerField(default=1)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    estatus = models.BooleanField(default=True)
     orden_fk = models.ForeignKey(ordenes, on_delete=models.CASCADE, related_name='detalles')
     class Meta:
         db_table = 'detalles_ordenes'
+    def delete(self, *args, **kwargs):
+        self.estatus = False
+        self.save()
+    def restaurar(self):
+        self.estatus = True
+        self.save()
     def save(self, *args, **kwargs):
         self.subtotal = self.cantidad * self.precio
         super().save(*args, **kwargs)
@@ -129,5 +169,11 @@ class comentarios(models.Model):
     )
     class Meta:
         db_table = 'comentarios'
+    def delete(self, *args, **kwargs):
+        self.estatus = False
+        self.save()
+    def restaurar(self):
+        self.estatus = True
+        self.save()
     def __str__(self):
         return f"Comentario {str(self.id)[:8]}... Usuario {str(self.usuario_fk.id)[:8]}: {self.usuario_fk.username}... - Producto {str(self.producto_fk.id)[:8]}"
