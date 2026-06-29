@@ -56,7 +56,7 @@ class OrdenesVistaSet(viewsets.ModelViewSet):
         
         cliente_id = self.request.query_params.get('cliente')
         if cliente_id:
-            queryset = queryset.filfer(cliente_id=cliente_id)
+            queryset = queryset.filter(cliente_id=cliente_id)
         
         mesa_fk_id = self.request.query_params.get('mesa_fk')
         if mesa_fk_id:
@@ -80,9 +80,9 @@ class ComentariosVistaSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
     def get_queryset(self):
         queryset = super().get_queryset()
-        usuarios_fk_id = self.request.query_params.get('usuarios_fk')
-        if usuarios_fk_id:
-            queryset = queryset.filter(usuarios_fk_id = usuarios_fk_id)
+        usuario_fk_id = self.request.query_params.get('usuario_fk')
+        if usuario_fk_id:
+            queryset = queryset.filter(usuario_fk_id = usuario_fk_id)
         
         producto_fk_id = self.request.query_params.get('producto_fk_id')
         if producto_fk_id:
