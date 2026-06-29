@@ -16,28 +16,31 @@ class usuarios(AbstractUser):
         editable=False
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='cliente')
-    estatus = models.BooleanField(default=True)
     imagen = models.ImageField(upload_to='usuarios_media', null=True, blank=True)
+    objects = models.Manager()
+    activos = models.Manager()
     class Meta:
         db_table = 'usuarios'
     def delete(self, *args, **kwargs):
-        self.estatus = False
+        self.is_active = False
         self.save()
     def restaurar(self):
-        self.estatus = True
+        self.is_active = True
         self.save()
     def __str__(self):
         return f"Usuario {str(self.id)[:8]}:{self.first_name} {self.last_name}"
 
 class mesas(models.Model):
     ESTATUS_CHOICES = [
-        ('eliminado'),('Eliminado'),
+        ('eliminado','Eliminado'),
         ('disponible','Disponible'),
         ('ocupado','Ocupado')
     ]
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     numero_mesa = models.IntegerField()
     estatus = models.CharField(max_length=20, choices = ESTATUS_CHOICES, default='disponible')
+    objects = models.Manager()
+    activos = models.Manager()
     class Meta:
         db_table = 'mesas'
     def delete(self, *args, **kwargs):
@@ -53,6 +56,8 @@ class categorias(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     nombre = models.CharField(max_length=100)
     estatus = models.BooleanField(default=True)
+    objects = models.Manager()
+    activos = models.Manager()
     class Meta:
         db_table = 'categorias'
     def delete(self, *args, **kwargs):
@@ -72,6 +77,8 @@ class productos(models.Model):
     categoria_fk = models.ForeignKey(categorias, on_delete=models.CASCADE)
     estatus = models.BooleanField(default=True)
     imagen = models.ImageField(upload_to='productos_media/', null=True, blank=True)
+    objects = models.Manager()
+    activos = models.Manager()
     class Meta:
         db_table = 'productos'
     def delete(self, *args, **kwargs):
@@ -81,12 +88,12 @@ class productos(models.Model):
         self.estatus = True
         self.save()
     def __str__(self):
-        return f"Producto {self.id}...- Categoria {str(self.categoria_fk.id)[8]}:{str(self.categoria_fk.nombre)}"
+        return f"Producto {self.id}...- Categoria {str(self.categoria_fk.id)[:8]}:{str(self.categoria_fk.nombre)}"
 
 class ordenes(models.Model):
     ESTATUS_CHOICES = [
-        ('eliminado'),('Eliminado'),
-        ('hablitado'),('Habilitado'),
+        ('eliminado','Eliminado'),
+        ('hablitado','Habilitado'),
         ('pidiendo', 'Pidiendo'),
         ('cocinando', 'Cocinando'),
         ('finalizado', 'Finalizado'),
@@ -111,6 +118,8 @@ class ordenes(models.Model):
         related_name='mis_ordenes',
         limit_choices_to={'role':'cliente'}
     )
+    objects = models.Manager()
+    activos = models.Manager()
     class Meta:
         db_table = 'ordenes'
         ordering = ['-fecha_creacion']
@@ -135,6 +144,8 @@ class detallesOrdenes(models.Model):
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     estatus = models.BooleanField(default=True)
     orden_fk = models.ForeignKey(ordenes, on_delete=models.CASCADE, related_name='detalles')
+    objects = models.Manager()
+    activos = models.Manager()
     class Meta:
         db_table = 'detalles_ordenes'
     def delete(self, *args, **kwargs):
@@ -146,7 +157,7 @@ class detallesOrdenes(models.Model):
     def save(self, *args, **kwargs):
         self.subtotal = self.cantidad * self.precio
         super().save(*args, **kwargs)
-        total_actualizado = sum(detalle.subtotal for detalle in self.orden_fk.detalles.all())
+        total_actualizado = sum(detalle.subtotal for detalle in self.orden_fk.detalles.filter(estatus = True))
         
         self.orden_fk.monto_total = total_actualizado
         self.orden_fk.save()
@@ -167,6 +178,8 @@ class comentarios(models.Model):
         productos, 
         on_delete=models.CASCADE # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
     )
+    objects = models.Manager()
+    activos = models.Manager()
     class Meta:
         db_table = 'comentarios'
     def delete(self, *args, **kwargs):
