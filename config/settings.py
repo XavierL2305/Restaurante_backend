@@ -45,12 +45,21 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'core'
+    'rest_framework_simplejwt',
+    'core',
 ]
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # La sesión dura 1 hora
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Se puede renovar por 7 días
 }
 
 MIDDLEWARE = [
@@ -144,3 +153,5 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT =os.path.join(BASE_DIR, 'media')
 
 AUTH_USER_MODEL = 'core.usuarios'
+
+from datetime import timedelta

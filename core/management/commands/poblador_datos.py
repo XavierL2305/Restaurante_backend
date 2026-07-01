@@ -20,9 +20,9 @@ class Command(BaseCommand):
         productos.objects.all().delete()
 
         self.stdout.write('Creando categorías...')
-        cat1 = categorias.objects.create(nombre='Platos Fuertes')
-        cat2 = categorias.objects.create(nombre='Bebidas')
-        cat3 = categorias.objects.create(nombre='Postres')
+        cat1 = categorias.objects.create(nombre='Platos Fuertes', imagen='categorias_media/187.webp')
+        cat2 = categorias.objects.create(nombre='Bebidas', imagen='categorias_media/7.webp')
+        cat3 = categorias.objects.create(nombre='Postres', imagen='categorias_media/5.webp')
 
         self.stdout.write('Cargando Productos con sus categorías')
         prod1 = productos.objects.create(
@@ -40,7 +40,7 @@ class Command(BaseCommand):
             imagen='productos/178.webp'
         )
         prod3 = productos.objects.create(
-            nombre= 'Pasta con champiñones', 
+            nombre= 'Champiñones rebosados', 
             descripcion=self.detalles, 
             precio=9.1, 
             categoria_fk=cat1,
@@ -83,7 +83,7 @@ class Command(BaseCommand):
             imagen='productos/1.webp'
         )
         prod9 = productos.objects.create(
-            nombre= 'Café con leche', 
+            nombre= 'Café Negro', 
             descripcion=self.detalles, 
             precio=5.5, 
             categoria_fk=cat2,

@@ -15,6 +15,7 @@ class usuarios(AbstractUser):
         default=uuid.uuid4,
         editable=False
     )
+    google_uid = models.CharField(max_length=255, blank=True, null=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='cliente')
     imagen = models.ImageField(upload_to='usuarios_media', null=True, blank=True)
     objects = models.Manager()
@@ -56,6 +57,7 @@ class categorias(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     nombre = models.CharField(max_length=100)
     estatus = models.BooleanField(default=True)
+    imagen = models.ImageField(upload_to='categorias_media/', null=True, blank=True)
     objects = models.Manager()
     activos = models.Manager()
     class Meta:
