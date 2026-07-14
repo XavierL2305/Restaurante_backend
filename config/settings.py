@@ -30,9 +30,15 @@ ALLOWED_HOSTS = [
     'localhost', 
     '127.0.0.1', 
     '10.0.2.2', 
-    '192.168.1.105'
+    '192.168.1.105',
+    '192.168.1.203'
 ] # Pon tu IPv4 real también por si acaso
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8081",
+    "http://192.168.1.203:8081", # La IP de tu PC
+    "http://192.168.1.39:8081",  # La IP de tu celular
+]
 
 # Application definition
 
@@ -52,10 +58,17 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
+    'DEFAULT_PARSER_CLASSES':[
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+
+from datetime import timedelta
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # La sesión dura 1 hora
@@ -153,5 +166,3 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT =os.path.join(BASE_DIR, 'media')
 
 AUTH_USER_MODEL = 'core.usuarios'
-
-from datetime import timedelta

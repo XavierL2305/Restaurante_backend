@@ -1,3 +1,9 @@
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
+
 import logging
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework import viewsets
@@ -10,7 +16,9 @@ from .serializers import (
     ProductosSerializado,
     OrdenesSerializado,
     DetallesSerializado,
-    ComentariosSerializado
+    ComentariosSerializado,
+
+    CustomTokenObtainPairSerializer
 )
 # from .utils.bd_mongo import logs_colletion, normalizar_para_mongo
 
@@ -88,3 +96,55 @@ class ComentariosVistaSet(viewsets.ModelViewSet):
         if producto_fk_id:
             queryset = queryset.filter(producto_fk_id = producto_fk_id)
         return queryset
+
+class RegistroUsuarioVistaSet(generics.CreateAPIView):
+    queryset = usuarios.objects.all()
+    serializer_class = UsuariosSerializado
+    permission_classes = []
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        # Token >>>>
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'message':'Usuario creado exitosamente',
+            'access':str(refresh.access_token),
+            'refresh':str(refresh),
+            'user':{
+                'id':str(user.id),
+                'email':user.email,
+                'first_name':user.first_name,
+                'role':user.role
+            }
+        }, status=status.HTTP_201_CREATED)
+class LoginUsuarioVistaSet(TokenObtainPairView):
+    permission_classes = []
+    serializer_class = CustomTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+
+        if response.status_code == 200:
+            tokens = response.data
+
+            decoded_token = AccessToken(tokens['access'])
+            user_id = decoded_token['user_id']
+
+            user = usuarios.objects.get(id=user_id)
+
+            return Response({
+                'message': 'Login exitoso',
+                'access': tokens['access'],
+                'refresh': tokens['refresh'],
+                'user': {
+                    'id': str(user.id),
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'role': user.role
+                }
+            }, status=status.HTTP_200_OK)
+        return response

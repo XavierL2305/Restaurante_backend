@@ -1,6 +1,6 @@
 from django.db import models
 import uuid
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 # Create your models here.
 
 class usuarios(AbstractUser):
@@ -18,7 +18,7 @@ class usuarios(AbstractUser):
     google_uid = models.CharField(max_length=255, blank=True, null=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='cliente')
     imagen = models.ImageField(upload_to='usuarios_media', null=True, blank=True)
-    objects = models.Manager()
+    objects = UserManager()
     activos = models.Manager()
     class Meta:
         db_table = 'usuarios'
