@@ -67,9 +67,14 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+CACHES ={
+    'default':{
+        'BACKEND':'django.core.cache.backends.locmem.LocMemCache'
+    }
+}
+
 
 from datetime import timedelta
-
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # La sesión dura 1 hora
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Se puede renovar por 7 días

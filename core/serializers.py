@@ -3,6 +3,7 @@ from .models import usuarios, mesas, ordenes, productos, categorias, detallesOrd
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
+from django.core.cache import cache
 
 class UsuariosSerializado(serializers.ModelSerializer):
     class Meta:
@@ -21,6 +22,10 @@ class UsuariosSerializado(serializers.ModelSerializer):
         extra_kwargs = {
             'password':{'write_only':True}
         }
+    def validate_email(self, value):
+        if usuarios.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Ya existe una cuenta con ese correo electrónico")
+        return value
     def create(self, validated_data):
         password = validated_data.pop('password', None)
         usuario = usuarios(**validated_data)
@@ -71,23 +76,36 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         password = attrs.get('password')
 
         if identificador and password:
-            user = authenticate(request=self.context.get('request'), username=identificador, password=password)
+            cache_key = f'login_attempts_{identificador}'
+            intentos = cache.get(cache_key, 0)
 
+            if intentos >= 3:
+                raise serializers.ValidationError(
+                    'Demasiados intentos fallidos. Por seguridad, debes esperar 1 minuto antes de intentar nuevamente.',
+                    code='authorization'
+                )
+
+            user = None
+            
+            user = authenticate(request=self.context.get('request'), username=identificador, password=password)
+            
             if user is None:
                 try:
                     user_obj = usuarios.objects.get(email=identificador)
                     user = authenticate(request=self.context.get('request'), username=user_obj.username, password=password)
                 except usuarios.DoesNotExist:
                     pass
-            if user is not None and not user.is_active:
+            if user is None:
+                cache.set(cache_key, intentos + 1, 60)
+                intentos_restantes = 3 - (intentos + 1)
+                mensaje = f'Credenciales incorrectas. Te quedan {intentos_restantes} intento(s).'
+                raise serializers.ValidationError(mensaje, code='authorization')
+
+            if not user.is_active:
                 raise serializers.ValidationError(
                     'Tu cuenta ha sido desactivada. Contacta al administrador.',
                     code='authorization'
                 )
-            if user is None:
-                raise serializers.ValidationError(
-                    _('Usuario inexistente o credenciales erronias'),code='authorization'
-                )
-        attrs['username'] = user.username
 
+        attrs['username'] = user.username
         return super().validate(attrs)
