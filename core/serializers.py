@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import usuarios, mesas, ordenes, productos, categorias, detallesOrdenes, comentarios
+from .models import usuarios, mesas, ordenes, productos, categorias, detallesOrdenes, comentarios, favoritos
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
@@ -67,6 +67,11 @@ class DetallesSerializado(serializers.ModelSerializer):
 class ComentariosSerializado(serializers.ModelSerializer):
     class Meta:
         model = comentarios
+        fields = '__all__'
+
+class favoritosSerializado(serializers.ModelSerializer):
+    class Meta:
+        model = favoritos
         fields = '__all__'
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):

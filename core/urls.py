@@ -10,10 +10,13 @@ from .views import (
     OrdenesVistaSet,
     DetallesVistaSet,
     ComentariosVistaSet,
+    FavoritosVistaSet,
 
     RegistroUsuarioVistaSet,
     LoginUsuarioVistaSet
 )
+
+from .views import UsuarioStatsView 
 
 router = DefaultRouter()
 router.register(r'usuarios', UsuariosVistaSet)
@@ -23,11 +26,13 @@ router.register(r'productos', ProductosVistaSet)
 router.register(r'ordenes', OrdenesVistaSet)
 router.register(r'detalles', DetallesVistaSet)
 router.register(r'comentarios', ComentariosVistaSet)
+router.register(r'favoritos', FavoritosVistaSet)
 
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/google/', GoogleLoginView.as_view(), name='google_login'),
     path('auth/login/', LoginUsuarioVistaSet.as_view(), name='auth_login'),
     path('auth/registro/', RegistroUsuarioVistaSet.as_view(), name='auth_register'),
-    path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh')
+    path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('usuarios/<uuid:user_id>/stats/', UsuarioStatsView.as_view(), name='usuario_stats'),
 ]

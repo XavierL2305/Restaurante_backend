@@ -5,19 +5,19 @@ from decimal import Decimal
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
-from core.models import categorias, productos, mesas, usuarios, comentarios, ordenes, detallesOrdenes
+from core.models import categorias, productos, mesas, usuarios, comentarios, ordenes, detallesOrdenes, favoritos
 
 class Command(BaseCommand):
     help = 'Poblando la base de datos con datos de prueba'
     detalles = "Aca es donde se detalla el producto (Comida, bebida...)"
     def handle(self, *args, **options):
         self.stdout.write('Borrando datos anteriores')
-        # usuarios.objects.all().delete()
+        usuarios.objects.all().delete()
         categorias.objects.all().delete()
         mesas.objects.all().delete()
-        usuarios.objects.all().delete()
         ordenes.objects.all().delete()
         productos.objects.all().delete()
+        favoritos.objects.all().delete()
 
         self.stdout.write('Creando categorías...')
         cat1 = categorias.objects.create(nombre='Platos Fuertes', imagen='categorias_media/187.webp')
@@ -334,6 +334,70 @@ class Command(BaseCommand):
             estatus = True,
             usuario_fk = us5,
             producto_fk = prod12
+        )
+
+        favoritos.objects.create(
+            usuario_fk = us1,
+            producto_fk = prod15,
+        )
+        favoritos.objects.create(
+            usuario_fk = us1,
+            producto_fk = prod14,
+        )
+        favoritos.objects.create(
+            usuario_fk = us1,
+            producto_fk = prod13,
+        )
+        favoritos.objects.create(
+            usuario_fk = us1,
+            producto_fk = prod12,
+        )
+
+        favoritos.objects.create(
+            usuario_fk = us2,
+            producto_fk = prod1,
+        )
+        favoritos.objects.create(
+            usuario_fk = us2,
+            producto_fk = prod2,
+        )
+
+        favoritos.objects.create(
+            usuario_fk = us3,
+            producto_fk = prod3,
+        )
+        favoritos.objects.create(
+            usuario_fk = us3,
+            producto_fk = prod4,
+        )
+        favoritos.objects.create(
+            usuario_fk = us3,
+            producto_fk = prod15,
+        )
+
+        favoritos.objects.create(
+            usuario_fk = us4,
+            producto_fk = prod5,
+        )
+        favoritos.objects.create(
+            usuario_fk = us4,
+            producto_fk = prod4,
+        )
+        favoritos.objects.create(
+            usuario_fk = us4,
+            producto_fk = prod15,
+        )
+        favoritos.objects.create(
+            usuario_fk = us4,
+            producto_fk = prod3,
+        )
+        favoritos.objects.create(
+            usuario_fk = us4,
+            producto_fk = prod7,
+        )
+        favoritos.objects.create(
+            usuario_fk = us4,
+            producto_fk = prod12,
         )
 
         self.stdout.write(self.style.SUCCESS('Base de datos lista con informacion'))

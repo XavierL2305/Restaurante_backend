@@ -192,3 +192,11 @@ class comentarios(models.Model):
         self.save()
     def __str__(self):
         return f"Comentario {str(self.id)[:8]}... Usuario {str(self.usuario_fk.id)[:8]}: {self.usuario_fk.username}... - Producto {str(self.producto_fk.id)[:8]}"
+
+class favoritos(models.Model):
+    usuario_fk = models.ForeignKey(usuarios, on_delete=models.CASCADE)
+    producto_fk = models.ForeignKey(productos, on_delete=models.CASCADE)
+    fecha = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        db_table = 'favoritos'
+        unique_together = ('usuario_fk', 'producto_fk')

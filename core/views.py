@@ -1,14 +1,15 @@
 from rest_framework import generics, status
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.tokens import AccessToken
 
 import logging
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework import viewsets
 
-from .models import usuarios, mesas, categorias, productos, ordenes, detallesOrdenes, comentarios
+from .models import usuarios, mesas, categorias, productos, ordenes, detallesOrdenes, comentarios, favoritos
 from .serializers import (
     UsuariosSerializado,
     MesasSerializado,
@@ -17,6 +18,7 @@ from .serializers import (
     OrdenesSerializado,
     DetallesSerializado,
     ComentariosSerializado,
+    favoritosSerializado,
 
     CustomTokenObtainPairSerializer
 )
@@ -25,6 +27,35 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 # Create your views here.
+
+class UsuarioStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        # 1. Contamos las órdenes (Filtramos por pagadas para no contar las canceladas o pendientes)
+        pedidos_count = ordenes.objects.filter(
+            cliente_id=user_id, 
+            estatus='pagado' # Solo las que sí se concluyeron
+        ).count()
+
+        # 2. Contamos las reseñas/comentarios (Solo los activos)
+        resenas_count = comentarios.objects.filter(
+            usuario_fk_id=user_id, 
+            estatus=True
+        ).count()
+
+        # 3. Contamos los favoritos 
+        # NOTA: Como aún no creas el modelo de favoritos en tu BD, lo dejamos en 0 temporalmente
+        favoritos_count = favoritos.objects.filter(
+            usuario_fk_id=user_id,
+        ).count()
+
+        # 4. Devolvemos el JSON con los números exactos que espera tu frontend
+        return Response({
+            'pedidos': pedidos_count,
+            'favoritos': favoritos_count,
+            'reseñas': resenas_count
+        })
 
 class UsuariosVistaSet(viewsets.ModelViewSet):
     queryset = usuarios.objects.all()
@@ -92,7 +123,22 @@ class ComentariosVistaSet(viewsets.ModelViewSet):
         if usuario_fk_id:
             queryset = queryset.filter(usuario_fk_id = usuario_fk_id)
         
-        producto_fk_id = self.request.query_params.get('producto_fk_id')
+        producto_fk_id = self.request.query_params.get('producto_fk')
+        if producto_fk_id:
+            queryset = queryset.filter(producto_fk_id = producto_fk_id)
+        return queryset
+
+class FavoritosVistaSet(viewsets.ModelViewSet):
+    queryset = favoritos.objects.all()
+    serializer_class = favoritosSerializado
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        usuario_fk_id = self.request.query_params.get('usuario_fk')
+        if usuario_fk_id:
+            queryset = queryset.filter(usuario_fk_id = usuario_fk_id)
+        
+        producto_fk_id = self.request.query_params.get('producto_fk')
         if producto_fk_id:
             queryset = queryset.filter(producto_fk_id = producto_fk_id)
         return queryset
