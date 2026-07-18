@@ -82,13 +82,24 @@ class ProductosVistaSet(viewsets.ModelViewSet):
         if categoria_fk_id:
             queryset = queryset.filter(categoria_fk_id=categoria_fk_id)
         return queryset
+    
+from rest_framework.filters import SearchFilter
 
 class OrdenesVistaSet(viewsets.ModelViewSet):
     queryset = ordenes.objects.all()
     serializer_class = OrdenesSerializado
     permission_classes = [IsAuthenticatedOrReadOnly]
+    filter_backends = [SearchFilter]
+    search_fields = ['cliente__first_name', 'cliente__email', 'mesa_fk__numero_mesa']
     def get_queryset(self):
         queryset = super().get_queryset()
+        user = self.request.user  # <-- Django obtiene el usuario del token automáticamente
+
+        # 1. Si es un cliente autenticado, FORZAMOS a que solo vea sus propias órdenes
+        if user.is_authenticated and user.role == 'cliente':
+            return queryset.filter(cliente_id=user.id)
+
+        # 2. Si es ADMIN, MESERO o CAJERO, aplicamos los filtros normales de la URL:
         mesero_id = self.request.query_params.get('mesero')
         if mesero_id:
             queryset = queryset.filter(mesero_id=mesero_id)
@@ -99,7 +110,11 @@ class OrdenesVistaSet(viewsets.ModelViewSet):
         
         mesa_fk_id = self.request.query_params.get('mesa_fk')
         if mesa_fk_id:
-            queryset = queryset.filter(mesa_fk_id = mesa_fk_id)
+            queryset = queryset.filter(mesa_fk_id=mesa_fk_id)
+        
+        estatus = self.request.query_params.get('estatus')
+        if estatus:
+            queryset = queryset.filter(estatus=estatus) # Asegúrate de que tu modelo tenga el campo 'estatus' escrito igual
         return queryset
 
 class DetallesVistaSet(viewsets.ModelViewSet):

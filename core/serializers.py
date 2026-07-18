@@ -44,7 +44,23 @@ class MesasSerializado(serializers.ModelSerializer):
         model = mesas
         fields = '__all__'
 
+# Serializadores "ligeros" con campos específicos
+class MeseroCortoSerializado(serializers.ModelSerializer):
+    class Meta:
+        model = usuarios  # Ajusta al nombre exacto de tu modelo si cambia
+        fields = ('id', 'first_name', 'last_name')
+
+class ClienteCortoSerializado(serializers.ModelSerializer):
+    class Meta:
+        model = usuarios
+        fields = ('id', 'first_name', 'email')
+
+# Ahora los usas en tu serializador de Órdenes
 class OrdenesSerializado(serializers.ModelSerializer):
+    mesa_fk = MesasSerializado(read_only=True)
+    mesero = MeseroCortoSerializado(read_only=True)  # <-- Usamos el corto
+    cliente = ClienteCortoSerializado(read_only=True)  # <-- Usamos el corto
+    
     class Meta:
         model = ordenes
         fields = '__all__'

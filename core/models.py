@@ -95,7 +95,7 @@ class productos(models.Model):
 class ordenes(models.Model):
     ESTATUS_CHOICES = [
         ('eliminado','Eliminado'),
-        ('hablitado','Habilitado'),
+        ('habilitado','Habilitado'),
         ('pidiendo', 'Pidiendo'),
         ('cocinando', 'Cocinando'),
         ('finalizado', 'Finalizado'),
