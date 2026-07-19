@@ -57,13 +57,54 @@ class ClienteCortoSerializado(serializers.ModelSerializer):
 
 # Ahora los usas en tu serializador de Órdenes
 class OrdenesSerializado(serializers.ModelSerializer):
-    mesa_fk = MesasSerializado(read_only=True)
-    mesero = MeseroCortoSerializado(read_only=True)  # <-- Usamos el corto
-    cliente = ClienteCortoSerializado(read_only=True)  # <-- Usamos el corto
+    mesa_info = MesasSerializado(source='mesa_fk', read_only=True)
+    mesero_info = MeseroCortoSerializado(source='mesero', read_only=True)
+    cliente_info = ClienteCortoSerializado(source='cliente', read_only=True)
     
     class Meta:
         model = ordenes
-        fields = '__all__'
+        fields = [
+            'id', 'estatus', 'fecha_creacion', 'monto_total', 
+            'mesa_fk', 'mesero', 'cliente', # Campos de escritura (Aceptan el UUID)
+            'mesa_info', 'mesero_info', 'cliente_info' # Campos de lectura (Devuelven el objeto completo)
+        ]
+
+    def create(self, validated_data):
+        mesa_id = validated_data.pop('mesa_fk', None)
+        mesero_id = validated_data.pop('mesero', None)
+        cliente_id = validated_data.pop('cliente', None)
+
+        mesa_instancia = mesas.objects.get(id=mesa_id) if mesa_id else None
+        mesero_instancia = usuarios.objects.get(id=mesero_id) if mesero_id else None
+        cliente_instancia = usuarios.objects.get(id=cliente_id) if cliente_id else None
+
+        if mesa_instancia and mesa_instancia.estatus == 'disponible':
+            mesa_instancia.estatus = 'ocupado'
+            mesa_instancia.save()
+
+        orden = ordenes.objects.create(
+            mesa_fk=mesa_instancia,
+            mesero=mesero_instancia,
+            cliente=cliente_instancia,
+            **validated_data
+        )
+        return orden
+
+    def update(self, instance, validated_data):
+        # Extraemos los IDs si vienen en el PATCH (ej. cuando el mesero toma la orden)
+        mesa_id = validated_data.pop('mesa_fk', None)
+        mesero_id = validated_data.pop('mesero', None)
+        cliente_id = validated_data.pop('cliente', None)
+
+        if mesa_id:
+            instance.mesa_fk = mesas.objects.get(id=mesa_id)
+        if mesero_id:
+            instance.mesero = usuarios.objects.get(id=mesero_id)
+        if cliente_id:
+            instance.cliente = usuarios.objects.get(id=cliente_id)
+
+        # Guardamos los cambios normales (como el estatus 'cocinando') y devolvemos
+        return super().update(instance, validated_data)
 
 class ProductosSerializado(serializers.ModelSerializer):
     class Meta:

@@ -113,6 +113,8 @@ class ordenes(models.Model):
         on_delete=models.CASCADE, # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
         related_name='ordenes_asignadas',
         limit_choices_to={'role':'mesero'},
+        null=True,
+        blank=True,
     )
     cliente = models.ForeignKey(
         usuarios,
