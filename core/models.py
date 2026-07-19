@@ -44,6 +44,7 @@ class mesas(models.Model):
     activos = models.Manager()
     class Meta:
         db_table = 'mesas'
+        ordering = ['numero_mesa']
     def delete(self, *args, **kwargs):
         self.estatus = 'eliminado'
         self.save()

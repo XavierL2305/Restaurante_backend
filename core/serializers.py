@@ -40,6 +40,8 @@ class UsuariosSerializado(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 class MesasSerializado(serializers.ModelSerializer):
+    id = serializers.UUIDField(format='hex_verbose', read_only=True)
+    
     class Meta:
         model = mesas
         fields = '__all__'
@@ -55,28 +57,27 @@ class ClienteCortoSerializado(serializers.ModelSerializer):
         model = usuarios
         fields = ('id', 'first_name', 'email')
 
-# Ahora los usas en tu serializador de Órdenes
 class OrdenesSerializado(serializers.ModelSerializer):
+    # --- CAMPOS DE LECTURA ---
     mesa_info = MesasSerializado(source='mesa_fk', read_only=True)
     mesero_info = MeseroCortoSerializado(source='mesero', read_only=True)
     cliente_info = ClienteCortoSerializado(source='cliente', read_only=True)
-    
+
+    mesa_fk = serializers.PrimaryKeyRelatedField(queryset=mesas.objects.all())
+    mesero = serializers.PrimaryKeyRelatedField(queryset=usuarios.objects.all(), required=False, allow_null=True)
+    cliente = serializers.PrimaryKeyRelatedField(queryset=usuarios.objects.all())
+
     class Meta:
         model = ordenes
         fields = [
             'id', 'estatus', 'fecha_creacion', 'monto_total', 
-            'mesa_fk', 'mesero', 'cliente', # Campos de escritura (Aceptan el UUID)
-            'mesa_info', 'mesero_info', 'cliente_info' # Campos de lectura (Devuelven el objeto completo)
+            'mesa_fk', 'mesero', 'cliente', 
+            'mesa_info', 'mesero_info', 'cliente_info'
         ]
-
     def create(self, validated_data):
-        mesa_id = validated_data.pop('mesa_fk', None)
-        mesero_id = validated_data.pop('mesero', None)
-        cliente_id = validated_data.pop('cliente', None)
-
-        mesa_instancia = mesas.objects.get(id=mesa_id) if mesa_id else None
-        mesero_instancia = usuarios.objects.get(id=mesero_id) if mesero_id else None
-        cliente_instancia = usuarios.objects.get(id=cliente_id) if cliente_id else None
+        mesa_instancia = validated_data.pop('mesa_fk', None)
+        mesero_instancia = validated_data.pop('mesero', None)
+        cliente_instancia = validated_data.pop('cliente', None)
 
         if mesa_instancia and mesa_instancia.estatus == 'disponible':
             mesa_instancia.estatus = 'ocupado'
@@ -89,9 +90,8 @@ class OrdenesSerializado(serializers.ModelSerializer):
             **validated_data
         )
         return orden
-
     def update(self, instance, validated_data):
-        # Extraemos los IDs si vienen en el PATCH (ej. cuando el mesero toma la orden)
+        # En el update sí sacamos los IDs (strings) y los buscamos, porque el PATCH viene plano desde el frontend
         mesa_id = validated_data.pop('mesa_fk', None)
         mesero_id = validated_data.pop('mesero', None)
         cliente_id = validated_data.pop('cliente', None)
@@ -103,8 +103,25 @@ class OrdenesSerializado(serializers.ModelSerializer):
         if cliente_id:
             instance.cliente = usuarios.objects.get(id=cliente_id)
 
-        # Guardamos los cambios normales (como el estatus 'cocinando') y devolvemos
-        return super().update(instance, validated_data)
+        instance = super().update(instance, validated_data)
+
+        if instance.estatus in ('eliminado', 'pagado'):
+            instance.mesa_fk.estatus = 'disponible'
+            instance.mesa_fk.save()
+
+        return instance
+    
+class DetallesSerializado(serializers.ModelSerializer):
+    # ✅ OBLIGAMOS A DRF A SER ESTRICTOS CON LOS UUIDS
+    producto_fk = serializers.PrimaryKeyRelatedField(queryset=productos.objects.all())
+    orden_fk = serializers.PrimaryKeyRelatedField(queryset=ordenes.objects.all())
+    
+    class Meta:
+        model = detallesOrdenes
+        fields = '__all__'
+        extra_kwargs = {
+            'subtotal': {'read_only': True},
+        }
 
 class ProductosSerializado(serializers.ModelSerializer):
     class Meta:
@@ -116,10 +133,6 @@ class CategoriasSerializado(serializers.ModelSerializer):
         model = categorias
         fields = '__all__'
 
-class DetallesSerializado(serializers.ModelSerializer):
-    class Meta:
-        model = detallesOrdenes
-        fields = '__all__'
 
 class ComentariosSerializado(serializers.ModelSerializer):
     class Meta:
