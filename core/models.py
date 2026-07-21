@@ -3,6 +3,10 @@ import uuid
 from django.contrib.auth.models import AbstractUser, UserManager
 # Create your models here.
 
+class ActivosManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+    
 class usuarios(AbstractUser):
     ROLE_CHOICES = [
         ('cliente', 'Cliente'), 
@@ -19,7 +23,7 @@ class usuarios(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='cliente')
     imagen = models.ImageField(upload_to='usuarios_media', null=True, blank=True)
     objects = UserManager()
-    activos = models.Manager()
+    activos = ActivosManager()
     class Meta:
         db_table = 'usuarios'
     def delete(self, *args, **kwargs):
@@ -31,6 +35,9 @@ class usuarios(AbstractUser):
     def __str__(self):
         return f"Usuario {str(self.id)[:8]}:{self.first_name} {self.last_name}"
 
+class ActivosManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(estatus='disponible')
 class mesas(models.Model):
     ESTATUS_CHOICES = [
         ('eliminado','Eliminado'),
@@ -41,7 +48,7 @@ class mesas(models.Model):
     numero_mesa = models.IntegerField()
     estatus = models.CharField(max_length=20, choices = ESTATUS_CHOICES, default='disponible')
     objects = models.Manager()
-    activos = models.Manager()
+    activos = ActivosManager()
     class Meta:
         db_table = 'mesas'
         ordering = ['numero_mesa']
@@ -54,13 +61,17 @@ class mesas(models.Model):
     def __str__(self):
         return f"Mesa {str(self.id)[:8]}:{self.numero_mesa}"
 
+
+class ActivosManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(estatus=True)
 class categorias(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     nombre = models.CharField(max_length=100)
     estatus = models.BooleanField(default=True)
     imagen = models.ImageField(upload_to='categorias_media/', null=True, blank=True)
     objects = models.Manager()
-    activos = models.Manager()
+    activos = ActivosManager()
     class Meta:
         db_table = 'categorias'
     def delete(self, *args, **kwargs):
@@ -72,6 +83,10 @@ class categorias(models.Model):
     def __str__(self):
         return f"Categoria {str(self.id)[:8]}:{self.nombre}"
 
+
+class ActivosManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(estatus=True)
 class productos(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     nombre = models.CharField(max_length=200)
@@ -81,7 +96,7 @@ class productos(models.Model):
     estatus = models.BooleanField(default=True)
     imagen = models.ImageField(upload_to='productos_media/', null=True, blank=True)
     objects = models.Manager()
-    activos = models.Manager()
+    activos = ActivosManager()
     class Meta:
         db_table = 'productos'
     def delete(self, *args, **kwargs):
@@ -93,20 +108,22 @@ class productos(models.Model):
     def __str__(self):
         return f"Producto {self.id}...- Categoria {str(self.categoria_fk.id)[:8]}:{str(self.categoria_fk.nombre)}"
 
+class ActivosManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().exclude(estatus='eliminado')
 class ordenes(models.Model):
     ESTATUS_CHOICES = [
         ('eliminado','Eliminado'),
-        ('habilitado','Habilitado'),
         ('pidiendo', 'Pidiendo'),
         ('cocinando', 'Cocinando'),
         ('finalizado', 'Finalizado'),
         ('delivery', 'Delivery'),
-        ('entregado', 'Entregado'),
         ('pagado', 'Pagado')
     ]
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     estatus = models.CharField(max_length=20, choices=ESTATUS_CHOICES, default='pidiendo')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    estatus_anterior = models.CharField(max_length=20, blank=True, default='')
     mesa_fk = models.ForeignKey(mesas, on_delete=models.CASCADE)
     monto_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     mesero =models.ForeignKey(
@@ -124,7 +141,7 @@ class ordenes(models.Model):
         limit_choices_to={'role':'cliente'}
     )
     objects = models.Manager()
-    activos = models.Manager()
+    activos = ActivosManager()
     class Meta:
         db_table = 'ordenes'
         ordering = ['-fecha_creacion']
@@ -132,11 +149,15 @@ class ordenes(models.Model):
         self.estatus = 'eliminado'
         self.save()
     def restaurar(self):
-        self.estatus = 'habilitado'
+        self.estatus = self.estatus_anterior or 'pidiendo'
+        self.estatus_anterior = ''
         self.save()
     def __str__(self):
         return f"Orden {str(self.id)[:8]}... - Mesa {str(self.mesa_fk.id)[:8]}: {str(self.mesa_fk)}... - Mesero {str(self.mesero.id)[:8]}: {self.mesero.first_name} {self.mesero.last_name}... - Cliente {str(self.cliente.id)[:8]}: {self.cliente.first_name} {self.cliente.last_name}"
 
+class ActivosManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(estatus=True)
 class detallesOrdenes(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     producto_fk = models.ForeignKey(
@@ -169,6 +190,9 @@ class detallesOrdenes(models.Model):
     def __str__(self):
         return f"{self.cantidad} x {self.precio}... - Orden: {str(self.orden_fk.id)[:8]}"
 
+class ActivosManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(estatus=True)
 class comentarios(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     descripcion = models.TextField(max_length=200)
@@ -184,7 +208,7 @@ class comentarios(models.Model):
         on_delete=models.CASCADE # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
     )
     objects = models.Manager()
-    activos = models.Manager()
+    activos = ActivosManager()
     class Meta:
         db_table = 'comentarios'
     def delete(self, *args, **kwargs):

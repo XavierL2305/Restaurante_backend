@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 
+from decouple import config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+1vd^75=lp-!sik!lq%(g(+-ui_0v6vzljzsrq6p@(4_6n%m#d'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -34,10 +36,23 @@ ALLOWED_HOSTS = [
     '192.168.1.203'
 ] # Pon tu IPv4 real también por si acaso
 
+# CORS_ALLOWED_ORIGINS = [
+#     "https://tudominio.com",
+# ]
+
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8081",
-    "http://192.168.1.203:8081", # La IP de tu PC
-    "http://192.168.1.39:8081",  # La IP de tu celular
+    "http://localhost:8081",   # Expo web
+    "http://localhost:19000",  # Expo Go
+    "http://localhost:19002",  # Expo Go (segunda instancia)
+    "exp://localhost:8081",    # Expo native
+]
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+]
+CORS_ALLOW_HEADERS = [
+    "content-type", "authorization", "x-csrf-token"
 ]
 
 # Application definition
@@ -121,12 +136,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432', cast=int),
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'restaurantebd',       # El nombre que le pusiste en Postgres
-        'USER': 'postgres',            # Usualmente 'postgres' por defecto
-        'PASSWORD': 'family11',       # La contraseña que definiste al instalar Postgres
-        'HOST': 'localhost',             # O la IP de tu servidor
-        'PORT': '5432',                  # Puerto estándar de Postgres
     }
 }
 

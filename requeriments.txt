@@ -1,3 +1,4 @@
 pip install djangorestframework psycopg2-binary django-cors-headers pillow pymongo
 python manage.py makemigrations core
 pip install djangorestframework-simplejwt requests
+pip install python-decouple

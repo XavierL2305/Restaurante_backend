@@ -91,19 +91,23 @@ class OrdenesSerializado(serializers.ModelSerializer):
         )
         return orden
     def update(self, instance, validated_data):
-        # En el update sí sacamos los IDs (strings) y los buscamos, porque el PATCH viene plano desde el frontend
-        mesa_id = validated_data.pop('mesa_fk', None)
-        mesero_id = validated_data.pop('mesero', None)
-        cliente_id = validated_data.pop('cliente', None)
+        mesa = validated_data.pop('mesa_fk', None)
+        mesero = validated_data.pop('mesero', None)
+        cliente = validated_data.pop('cliente', None)
 
-        if mesa_id:
-            instance.mesa_fk = mesas.objects.get(id=mesa_id)
-        if mesero_id:
-            instance.mesero = usuarios.objects.get(id=mesero_id)
-        if cliente_id:
-            instance.cliente = usuarios.objects.get(id=cliente_id)
+        if mesa is not None:
+            instance.mesa_fk = mesa
+        if mesero is not None:
+            instance.mesero = mesero
+        if cliente is not None:
+            instance.cliente = cliente
 
         instance = super().update(instance, validated_data)
+
+        if validated_data.get('estatus') == 'eliminado':
+            instance.estatus_anterior = instance.estatus
+            instance.estatus = 'eliminado'
+            instance.save()
 
         if instance.estatus in ('eliminado', 'pagado'):
             instance.mesa_fk.estatus = 'disponible'
@@ -112,7 +116,6 @@ class OrdenesSerializado(serializers.ModelSerializer):
         return instance
     
 class DetallesSerializado(serializers.ModelSerializer):
-    # ✅ OBLIGAMOS A DRF A SER ESTRICTOS CON LOS UUIDS
     producto_fk = serializers.PrimaryKeyRelatedField(queryset=productos.objects.all())
     orden_fk = serializers.PrimaryKeyRelatedField(queryset=ordenes.objects.all())
     

@@ -1,10 +1,11 @@
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
+from decouple import config
 
 from pymongo import MongoClient
 
-client = MongoClient('mongodb://localhost:27017/', uuidRepresentation='standard')
+client = MongoClient(config('MONGO_URI'), uuidRepresentation='standard')
 db = client['auditoria_restaurante']
 logs_colletion = db['logs_movimientos']
 

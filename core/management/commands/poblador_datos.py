@@ -227,7 +227,7 @@ class Command(BaseCommand):
             cliente = us5
         )
         ordn3 = ordenes.objects.create(
-            estatus='entregado', 
+            estatus='finalizado', 
             mesa_fk=mes5,
             monto_total = Decimal('0.00'),
             mesero = us2,
