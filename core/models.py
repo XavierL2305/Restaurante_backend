@@ -120,6 +120,12 @@ class ordenes(models.Model):
         ('delivery', 'Delivery'),
         ('pagado', 'Pagado')
     ]
+    METODO_PAGO_CHOICES = [
+        ('efectivo', 'Efectivo'),
+        ('tarjeta', 'Tarjeta'),
+        ('transferencia', 'Transferencia'),
+        ('otro', 'Otro'),
+    ]
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     estatus = models.CharField(max_length=20, choices=ESTATUS_CHOICES, default='pidiendo')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
@@ -140,6 +146,9 @@ class ordenes(models.Model):
         related_name='mis_ordenes',
         limit_choices_to={'role':'cliente'}
     )
+    metodo_pago = models.CharField(max_length=20, choices=METODO_PAGO_CHOICES, blank=True, default='')
+    referencia_pago = models.CharField(max_length=100, blank=True, default='')
+    comprobante_pago = models.ImageField(upload_to='comprobantes_pago/', null=True, blank=True)
     objects = models.Manager()
     activos = ActivosManager()
     class Meta:

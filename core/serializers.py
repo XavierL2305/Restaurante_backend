@@ -72,7 +72,8 @@ class OrdenesSerializado(serializers.ModelSerializer):
         fields = [
             'id', 'estatus', 'fecha_creacion', 'monto_total', 
             'mesa_fk', 'mesero', 'cliente', 
-            'mesa_info', 'mesero_info', 'cliente_info'
+            'mesa_info', 'mesero_info', 'cliente_info',
+            'metodo_pago', 'referencia_pago', 'comprobante_pago'
         ]
     def create(self, validated_data):
         mesa_instancia = validated_data.pop('mesa_fk', None)
