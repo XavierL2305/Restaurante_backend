@@ -23,7 +23,7 @@ class GoogleLoginView(APIView):
                 return Response({'error': 'Token de Google inválido'}, status=status.HTTP_401_UNAUTHORIZED)
             
             # 3. Extraemos la info del usuario que nos da Google
-            google_uid = data.get('sub')
+            google_uid = data.get('id')
             email = data.get('email')
             first_name = data.get('given_name', '')
             last_name = data.get('family_name', '')
