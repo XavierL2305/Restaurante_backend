@@ -1,12 +1,28 @@
 from django.db import models
 import uuid
 from django.contrib.auth.models import AbstractUser, UserManager
-# Create your models here.
 
-class ActivosManager(models.Manager):
+
+class ActivosUsuarioManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(is_active=True)
-    
+
+
+class MesasActivasManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(estatus='disponible')
+
+
+class EstatusBooleanManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(estatus=True)
+
+
+class OrdenesActivasManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().exclude(estatus='eliminado')
+
+
 class usuarios(AbstractUser):
     ROLE_CHOICES = [
         ('cliente', 'Cliente'), 
@@ -23,7 +39,7 @@ class usuarios(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='cliente')
     imagen = models.ImageField(upload_to='usuarios_media', null=True, blank=True)
     objects = UserManager()
-    activos = ActivosManager()
+    activos = ActivosUsuarioManager()
     class Meta:
         db_table = 'usuarios'
     def delete(self, *args, **kwargs):
@@ -35,9 +51,6 @@ class usuarios(AbstractUser):
     def __str__(self):
         return f"Usuario {str(self.id)[:8]}:{self.first_name} {self.last_name}"
 
-class ActivosManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(estatus='disponible')
 class mesas(models.Model):
     ESTATUS_CHOICES = [
         ('eliminado','Eliminado'),
@@ -48,7 +61,7 @@ class mesas(models.Model):
     numero_mesa = models.IntegerField()
     estatus = models.CharField(max_length=20, choices = ESTATUS_CHOICES, default='disponible')
     objects = models.Manager()
-    activos = ActivosManager()
+    activos = MesasActivasManager()
     class Meta:
         db_table = 'mesas'
         ordering = ['numero_mesa']
@@ -62,16 +75,13 @@ class mesas(models.Model):
         return f"Mesa {str(self.id)[:8]}:{self.numero_mesa}"
 
 
-class ActivosManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(estatus=True)
 class categorias(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     nombre = models.CharField(max_length=100)
     estatus = models.BooleanField(default=True)
     imagen = models.ImageField(upload_to='categorias_media/', null=True, blank=True)
     objects = models.Manager()
-    activos = ActivosManager()
+    activos = EstatusBooleanManager()
     class Meta:
         db_table = 'categorias'
     def delete(self, *args, **kwargs):
@@ -84,9 +94,6 @@ class categorias(models.Model):
         return f"Categoria {str(self.id)[:8]}:{self.nombre}"
 
 
-class ActivosManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(estatus=True)
 class productos(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     nombre = models.CharField(max_length=200)
@@ -96,7 +103,7 @@ class productos(models.Model):
     estatus = models.BooleanField(default=True)
     imagen = models.ImageField(upload_to='productos_media/', null=True, blank=True)
     objects = models.Manager()
-    activos = ActivosManager()
+    activos = EstatusBooleanManager()
     class Meta:
         db_table = 'productos'
     def delete(self, *args, **kwargs):
@@ -108,9 +115,6 @@ class productos(models.Model):
     def __str__(self):
         return f"Producto {self.id}...- Categoria {str(self.categoria_fk.id)[:8]}:{str(self.categoria_fk.nombre)}"
 
-class ActivosManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().exclude(estatus='eliminado')
 class ordenes(models.Model):
     ESTATUS_CHOICES = [
         ('eliminado','Eliminado'),
@@ -150,7 +154,7 @@ class ordenes(models.Model):
     referencia_pago = models.CharField(max_length=100, blank=True, default='')
     comprobante_pago = models.ImageField(upload_to='comprobantes_pago/', null=True, blank=True)
     objects = models.Manager()
-    activos = ActivosManager()
+    activos = OrdenesActivasManager()
     class Meta:
         db_table = 'ordenes'
         ordering = ['-fecha_creacion']
@@ -164,9 +168,6 @@ class ordenes(models.Model):
     def __str__(self):
         return f"Orden {str(self.id)[:8]}... - Mesa {str(self.mesa_fk.id)[:8]}: {str(self.mesa_fk)}... - Mesero {str(self.mesero.id)[:8]}: {self.mesero.first_name} {self.mesero.last_name}... - Cliente {str(self.cliente.id)[:8]}: {self.cliente.first_name} {self.cliente.last_name}"
 
-class ActivosManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(estatus=True)
 class detallesOrdenes(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     producto_fk = models.ForeignKey(
@@ -176,11 +177,12 @@ class detallesOrdenes(models.Model):
     )
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     cantidad = models.PositiveIntegerField(default=1)
+    nota = models.TextField(max_length=500, blank=True, default='')
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     estatus = models.BooleanField(default=True)
     orden_fk = models.ForeignKey(ordenes, on_delete=models.CASCADE, related_name='detalles')
     objects = models.Manager()
-    activos = models.Manager()
+    activos = EstatusBooleanManager()
     class Meta:
         db_table = 'detalles_ordenes'
     def delete(self, *args, **kwargs):
@@ -199,9 +201,6 @@ class detallesOrdenes(models.Model):
     def __str__(self):
         return f"{self.cantidad} x {self.precio}... - Orden: {str(self.orden_fk.id)[:8]}"
 
-class ActivosManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(estatus=True)
 class comentarios(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     descripcion = models.TextField(max_length=200)
@@ -217,7 +216,7 @@ class comentarios(models.Model):
         on_delete=models.CASCADE # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
     )
     objects = models.Manager()
-    activos = ActivosManager()
+    activos = EstatusBooleanManager()
     class Meta:
         db_table = 'comentarios'
     def delete(self, *args, **kwargs):
