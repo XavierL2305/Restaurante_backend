@@ -194,10 +194,6 @@ class detallesOrdenes(models.Model):
     def save(self, *args, **kwargs):
         self.subtotal = self.cantidad * self.precio
         super().save(*args, **kwargs)
-        total_actualizado = sum(detalle.subtotal for detalle in self.orden_fk.detalles.filter(estatus = True))
-        
-        self.orden_fk.monto_total = total_actualizado
-        self.orden_fk.save()
     def __str__(self):
         return f"{self.cantidad} x {self.precio}... - Orden: {str(self.orden_fk.id)[:8]}"
 

@@ -6,7 +6,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.tokens import AccessToken
 
 import logging
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
+from .permissions import IsAdminOrReadOnly, IsStaffOrAdmin, IsOwnerOrStaffOrAdmin, IsAuthenticatedForWrite, IsOwnerOrAdmin, OrderPermission
 from rest_framework import viewsets
 
 from .models import usuarios, mesas, categorias, productos, ordenes, detallesOrdenes, comentarios, favoritos
@@ -60,22 +61,22 @@ class UsuarioStatsView(APIView):
 class UsuariosVistaSet(viewsets.ModelViewSet):
     queryset = usuarios.objects.all()
     serializer_class = UsuariosSerializado
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
 
 class MesasVistaSet(viewsets.ModelViewSet):
     queryset = mesas.objects.all()
     serializer_class = MesasSerializado
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
 
 class CategoriasVistaSet(viewsets.ModelViewSet):
     queryset = categorias.objects.all()
     serializer_class = CategoriasSerializado
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
 
 class ProductosVistaSet(viewsets.ModelViewSet):
     queryset = productos.objects.all()
     serializer_class = ProductosSerializado
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
     def get_queryset(self):
         queryset = super().get_queryset()
         categoria_fk_id = self.request.query_params.get('categoria_fk')
@@ -88,7 +89,7 @@ from rest_framework.filters import SearchFilter
 class OrdenesVistaSet(viewsets.ModelViewSet):
     queryset = ordenes.objects.all()
     serializer_class = OrdenesSerializado
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [OrderPermission]
     filter_backends = [SearchFilter]
     search_fields = ['cliente__first_name', 'cliente__email', 'mesa_fk__numero_mesa']
     def get_queryset(self):
@@ -120,7 +121,7 @@ class OrdenesVistaSet(viewsets.ModelViewSet):
 class DetallesVistaSet(viewsets.ModelViewSet):
     queryset = detallesOrdenes.objects.all()
     serializer_class = DetallesSerializado
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
     def get_queryset(self):
         queryset = super().get_queryset()
         orden_fk_id = self.request.query_params.get('orden_fk')
@@ -131,7 +132,7 @@ class DetallesVistaSet(viewsets.ModelViewSet):
 class ComentariosVistaSet(viewsets.ModelViewSet):
     queryset = comentarios.objects.all()
     serializer_class = ComentariosSerializado
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedForWrite]
     def get_queryset(self):
         queryset = super().get_queryset()
         usuario_fk_id = self.request.query_params.get('usuario_fk')
@@ -146,7 +147,7 @@ class ComentariosVistaSet(viewsets.ModelViewSet):
 class FavoritosVistaSet(viewsets.ModelViewSet):
     queryset = favoritos.objects.all()
     serializer_class = favoritosSerializado
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedForWrite]
     def get_queryset(self):
         queryset = super().get_queryset()
         usuario_fk_id = self.request.query_params.get('usuario_fk')
