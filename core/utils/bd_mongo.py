@@ -4,6 +4,7 @@ from uuid import UUID
 from decouple import config
 
 from pymongo import MongoClient
+from django.db.models.fields.files import FieldFile
 
 client = MongoClient(config('MONGO_URI'), uuidRepresentation='standard')
 db = client['auditoria_restaurante']
@@ -11,6 +12,8 @@ logs_colletion = db['logs_movimientos']
 
 
 def normalizar_para_mongo(value):
+    if isinstance(value, FieldFile):
+        return str(value) if value and value.name else None
     if isinstance(value, UUID):
         return str(value)
     if isinstance(value, Decimal):

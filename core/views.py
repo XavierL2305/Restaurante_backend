@@ -220,3 +220,63 @@ class LoginUsuarioVistaSet(TokenObtainPairView):
                 }
             }, status=status.HTTP_200_OK)
         return response
+
+
+class AuditoriaVista(APIView):
+    permission_classes = [IsStaffOrAdmin]
+
+    def get(self, request):
+        from .utils.bd_mongo import logs_colletion
+        from bson import json_util
+        import json
+
+        modelo = request.query_params.get('modelo')
+        accion = request.query_params.get('accion')
+        fecha_desde = request.query_params.get('fecha_desde')
+        fecha_hasta = request.query_params.get('fecha_hasta')
+        buscar = request.query_params.get('buscar')
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 20))
+
+        query = {}
+        if modelo:
+            query['modelo'] = modelo
+        if accion:
+            query['accion'] = accion
+        if fecha_desde or fecha_hasta:
+            fecha_query = {}
+            if fecha_desde:
+                fecha_query['$gte'] = fecha_desde
+            if fecha_hasta:
+                fecha_query['$lte'] = fecha_hasta + 'T23:59:59'
+            query['fecha'] = fecha_query
+        if buscar:
+            query['$or'] = [
+                {'usuario': {'$regex': buscar, '$options': 'i'}},
+                {'id_objeto': {'$regex': buscar, '$options': 'i'}},
+                {'ip': {'$regex': buscar, '$options': 'i'}},
+            ]
+
+        total = logs_colletion.count_documents(query)
+        skip = (page - 1) * page_size
+        logs = list(
+            logs_colletion.find(query)
+            .sort('fecha', -1)
+            .skip(skip)
+            .limit(page_size)
+        )
+
+        logs_serializados = []
+        for log in logs:
+            log['_id'] = str(log['_id'])
+            if 'fecha' in log:
+                log['fecha'] = log['fecha'].isoformat()
+            logs_serializados.append(log)
+
+        return Response({
+            'count': total,
+            'page': page,
+            'page_size': page_size,
+            'total_pages': (total + page_size - 1) // page_size,
+            'results': logs_serializados,
+        })

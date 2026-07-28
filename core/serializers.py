@@ -22,7 +22,6 @@ class UsuariosSerializado(serializers.ModelSerializer):
         extra_kwargs = {
             'password':{'write_only':True},
             'role': {'read_only': True},
-            'is_active': {'read_only': True},
         }
     def validate_email(self, value):
         if usuarios.objects.filter(email=value).exists():
