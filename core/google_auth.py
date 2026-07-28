@@ -37,53 +37,59 @@ class GoogleLoginView(APIView):
             return Response({'error': 'Error al conectar con Google'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # 4. Lógica de nuestra base de datos: ¿Existe el usuario?
-        user = None
-        
-        # Primero buscamos por el UID exacto de Google (Lo más seguro)
-        if google_uid:
-            user = usuarios.objects.filter(google_uid=google_uid).first()
+        try:
+            user = None
             
-        # Si no existe por UID, buscamos por correo (Por si se registró por otro método antes)
-        if not user and email:
-            user = usuarios.objects.filter(email=email).first()
-            # Si lo encuentra por email, le ligamos su Google UID para futuros logins
-            if user:
-                user.google_uid = google_uid
-                user.save()
+            # Primero buscamos por el UID exacto de Google (Lo más seguro)
+            if google_uid:
+                user = usuarios.objects.filter(google_uid=google_uid).first()
+                
+            # Si no existe por UID, buscamos por correo (Por si se registró por otro método antes)
+            if not user and email:
+                user = usuarios.objects.filter(email=email).first()
+                # Si lo encuentra por email, le ligamos su Google UID para futuros logins
+                if user:
+                    user.google_uid = google_uid
+                    user.save()
 
-        # 5. Si nunca ha existido, LO CREAMOS
-        if not user:
-            # Generamos un username basado en su correo (Django lo exige)
-            username = email.split('@')[0]
-            # Evitamos duplicados de username
-            base_username = username
-            counter = 1
-            while usuarios.objects.filter(username=username).exists():
-                username = f"{base_username}{counter}"
-                counter += 1
+            # 5. Si nunca ha existido, LO CREAMOS
+            if not user:
+                # Generamos un username basado en su correo (Django lo exige)
+                username = email.split('@')[0]
+                # Evitamos duplicados de username
+                base_username = username
+                counter = 1
+                while usuarios.objects.filter(username=username).exists():
+                    username = f"{base_username}{counter}"
+                    counter += 1
 
-            user = usuarios.objects.create_user(
-                username=username,
-                email=email,
-                first_name=first_name,
-                last_name=last_name,
-                google_uid=google_uid,
-                role='cliente', # Por defecto, alguien que se registra con Google es cliente
-                is_active=True
+                user = usuarios.objects.create_user(
+                    username=username,
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    google_uid=google_uid,
+                    role='cliente',
+                    is_active=True
+                )
+
+            # 6. Generamos los JWT (Las llaves de acceso de la app)
+            refresh = RefreshToken.for_user(user)
+            
+            return Response({
+                'message': 'Login exitoso',
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': {
+                    'id': str(user.id),
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'role': user.role
+                }
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {'error': 'Error interno del servidor'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-            # Opcional: Descargar la imagen de Google y guardarla en tu campo 'imagen'
-
-        # 6. Generamos los JWT (Las llaves de acceso de la app)
-        refresh = RefreshToken.for_user(user)
-        
-        return Response({
-            'message': 'Login exitoso',
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-            'user': {
-                'id': str(user.id),
-                'email': user.email,
-                'first_name': user.first_name,
-                'role': user.role
-            }
-        }, status=status.HTTP_200_OK)
