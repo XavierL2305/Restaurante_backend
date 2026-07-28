@@ -211,3 +211,6 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT =os.path.join(BASE_DIR, 'media')
 
 AUTH_USER_MODEL = 'core.usuarios'
+
+# Email (consola para desarrollo, cambiar a SMTP en producción)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

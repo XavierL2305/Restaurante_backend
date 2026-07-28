@@ -22,6 +22,7 @@ class UsuariosSerializado(serializers.ModelSerializer):
         extra_kwargs = {
             'password':{'write_only':True},
             'role': {'read_only': True},
+            'is_active': {'read_only': True},
         }
     def validate_email(self, value):
         if usuarios.objects.filter(email=value).exists():
@@ -178,9 +179,17 @@ class CategoriasSerializado(serializers.ModelSerializer):
 
 
 class ComentariosSerializado(serializers.ModelSerializer):
+    usuario_nombre = serializers.CharField(source='usuario_fk.first_name', read_only=True)
+    producto_nombre = serializers.CharField(source='producto_fk.nombre', read_only=True)
+    calificacion_display = serializers.CharField(source='get_calificacion_display', read_only=True)
+
     class Meta:
         model = comentarios
-        fields = '__all__'
+        fields = [
+            'id', 'descripcion', 'calificacion', 'calificacion_display',
+            'likes', 'imagen', 'estatus', 'usuario_fk', 'usuario_nombre',
+            'producto_fk', 'producto_nombre', 'fecha_creacion'
+        ]
 
 class favoritosSerializado(serializers.ModelSerializer):
     class Meta:

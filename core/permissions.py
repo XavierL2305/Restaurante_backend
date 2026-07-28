@@ -140,3 +140,22 @@ class IsOwnerOrAdmin(BasePermission):
         if hasattr(obj, 'cliente'):
             return obj.cliente_id == request.user.id
         return False
+
+
+class UserProfilePermission(BasePermission):
+    """
+    - Cualquier usuario autenticado puede leer (GET).
+    - Un usuario puede editar su propio perfil (PATCH/PUT).
+    - Admin puede gestionar todos los usuarios.
+    """
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return request.user and request.user.is_authenticated
+        if request.method in ('PUT', 'PATCH'):
+            return request.user and request.user.is_authenticated
+        return request.user and request.user.is_authenticated and request.user.role == 'admin'
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.role == 'admin':
+            return True
+        return obj.id == request.user.id

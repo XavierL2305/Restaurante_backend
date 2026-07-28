@@ -4,10 +4,16 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.tokens import AccessToken
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.core.mail import send_mail
+from django.conf import settings
+from decouple import config
 
 import logging
 from rest_framework.permissions import IsAuthenticated
-from .permissions import IsAdminOrReadOnly, IsStaffOrAdmin, IsOwnerOrStaffOrAdmin, IsAuthenticatedForWrite, IsOwnerOrAdmin, OrderPermission, OrderDetailPermission
+from .permissions import IsAdminOrReadOnly, IsStaffOrAdmin, IsOwnerOrStaffOrAdmin, IsAuthenticatedForWrite, IsOwnerOrAdmin, OrderPermission, OrderDetailPermission, UserProfilePermission
 from rest_framework import viewsets
 
 from .models import usuarios, mesas, categorias, productos, ordenes, detallesOrdenes, comentarios, favoritos
@@ -61,7 +67,12 @@ class UsuarioStatsView(APIView):
 class UsuariosVistaSet(viewsets.ModelViewSet):
     queryset = usuarios.objects.all()
     serializer_class = UsuariosSerializado
-    permission_classes = [IsStaffOrAdmin]
+    permission_classes = [UserProfilePermission]
+
+    def get_object(self):
+        obj = super().get_object()
+        self.check_object_permissions(self.request, obj)
+        return obj
 
 class MesasVistaSet(viewsets.ModelViewSet):
     queryset = mesas.objects.all()
@@ -79,6 +90,9 @@ class ProductosVistaSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
     def get_queryset(self):
         queryset = super().get_queryset()
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(nombre__icontains=search)
         categoria_fk_id = self.request.query_params.get('categoria_fk')
         if categoria_fk_id:
             queryset = queryset.filter(categoria_fk_id=categoria_fk_id)
@@ -280,3 +294,31 @@ class AuditoriaVista(APIView):
             'total_pages': (total + page_size - 1) // page_size,
             'results': logs_serializados,
         })
+class PasswordResetView(APIView):
+    permission_classes = []
+
+    def post(self, request):
+        email = request.data.get('email', '').strip()
+        new_password = request.data.get('new_password', '').strip()
+
+        if not email:
+            return Response({'error': 'El correo es obligatorio'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = usuarios.objects.get(email=email, is_active=True)
+        except usuarios.DoesNotExist:
+            return Response(
+                {'detail': 'Si el correo está registrado, podrás restablecer tu contraseña.'},
+                status=status.HTTP_200_OK
+            )
+
+        if not new_password:
+            return Response({'email_exists': True, 'detail': 'Correo verificado'}, status=status.HTTP_200_OK)
+
+        if len(new_password) < 8:
+            return Response({'error': 'La contraseña debe tener al menos 8 caracteres'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response({'detail': 'Contraseña actualizada exitosamente'}, status=status.HTTP_200_OK)
