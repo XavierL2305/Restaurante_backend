@@ -5,6 +5,8 @@ from .utils.bd_mongo import logs_colletion
 from .utils.utils import tomar_cliente_ip, get_request_actual
 from datetime import datetime
 
+CAMPOS_SENSIBLES = {'password', '_state', 'last_login'}
+
 def registrar_en_mongo(sender, instance, accion, usuario='Sistema', request=None):
     try:
         ip = tomar_cliente_ip(request)

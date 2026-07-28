@@ -3,19 +3,23 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import AllowAny
 from .models import usuarios
 
 class GoogleLoginView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
-        # 1. Recibimos el token que nos manda el frontend (Expo)
         google_token = request.data.get('token')
+
         if not google_token:
             return Response({'error': 'Token de Google no proporcionado'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2. Django le pregunta a Google: "¿Este token es válido?"
         try:
-            # Esta es la URL oficial de Google para verificar tokens
-            response = requests.get(f'https://www.googleapis.com/oauth2/v2/userinfo?access_token={google_token}')
+            response = requests.get(
+                'https://www.googleapis.com/oauth2/v2/userinfo',
+                headers={'Authorization': f'Bearer {google_token}'}
+            )
             data = response.json()
             
             # Si Google responde con error, el token es falso o expiró
