@@ -198,18 +198,27 @@ class detallesOrdenes(models.Model):
         return f"{self.cantidad} x {self.precio}... - Orden: {str(self.orden_fk.id)[:8]}"
 
 class comentarios(models.Model):
+    CALIFICACION_CHOICES = [
+        (1, 'No me gustó mucho'),
+        (2, 'No me gustó'),
+        (3, 'No es de mi agrado'),
+        (4, 'Me gustó'),
+        (5, 'Me gustó mucho'),
+    ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    descripcion = models.TextField(max_length=200)
+    descripcion = models.TextField(max_length=200, blank=True, default='')
+    calificacion = models.IntegerField(choices=CALIFICACION_CHOICES, default=5)
     likes = models.IntegerField(default=0)
     imagen = models.ImageField(upload_to='comentarios_media/', blank=True, null=True)
     estatus = models.BooleanField(default=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True, null=True)
     usuario_fk = models.ForeignKey(
         usuarios, 
-        on_delete=models.CASCADE # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
+        on_delete=models.CASCADE
     )
     producto_fk = models.ForeignKey(
         productos, 
-        on_delete=models.CASCADE # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
+        on_delete=models.CASCADE
     )
     objects = models.Manager()
     activos = EstatusBooleanManager()

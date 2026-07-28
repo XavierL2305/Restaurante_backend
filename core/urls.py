@@ -13,7 +13,8 @@ from .views import (
     FavoritosVistaSet,
 
     RegistroUsuarioVistaSet,
-    LoginUsuarioVistaSet
+    LoginUsuarioVistaSet,
+    PasswordResetView
 )
 
 from .views import UsuarioStatsView 
@@ -34,5 +35,6 @@ urlpatterns = [
     path('auth/login/', LoginUsuarioVistaSet.as_view(), name='auth_login'),
     path('auth/registro/', RegistroUsuarioVistaSet.as_view(), name='auth_register'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('auth/password-reset/', PasswordResetView.as_view(), name='password_reset'),
     path('usuarios/<uuid:user_id>/stats/', UsuarioStatsView.as_view(), name='usuario_stats'),
 ]
