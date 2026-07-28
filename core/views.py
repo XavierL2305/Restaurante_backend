@@ -7,12 +7,13 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 import logging
 from rest_framework.permissions import IsAuthenticated
-from .permissions import IsAdminOrReadOnly, IsStaffOrAdmin, IsOwnerOrStaffOrAdmin, IsAuthenticatedForWrite, IsOwnerOrAdmin, OrderPermission
+from .permissions import IsAdminOrReadOnly, IsStaffOrAdmin, IsOwnerOrStaffOrAdmin, IsAuthenticatedForWrite, IsOwnerOrAdmin, OrderPermission, OrderDetailPermission
 from rest_framework import viewsets
 
 from .models import usuarios, mesas, categorias, productos, ordenes, detallesOrdenes, comentarios, favoritos
 from .serializers import (
     UsuariosSerializado,
+    RegistroUsuariosSerializado,
     MesasSerializado,
     CategoriasSerializado,
     ProductosSerializado,
@@ -33,25 +34,24 @@ class UsuarioStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
-        # 1. Contamos las órdenes (Filtramos por pagadas para no contar las canceladas o pendientes)
+        user = request.user
+        if user.role == 'cliente' and str(user.id) != str(user_id):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
+        
         pedidos_count = ordenes.objects.filter(
             cliente_id=user_id, 
-            estatus='pagado' # Solo las que sí se concluyeron
+            estatus='pagado'
         ).count()
 
-        # 2. Contamos las reseñas/comentarios (Solo los activos)
         resenas_count = comentarios.objects.filter(
             usuario_fk_id=user_id, 
             estatus=True
         ).count()
 
-        # 3. Contamos los favoritos 
-        # NOTA: Como aún no creas el modelo de favoritos en tu BD, lo dejamos en 0 temporalmente
         favoritos_count = favoritos.objects.filter(
             usuario_fk_id=user_id,
         ).count()
 
-        # 4. Devolvemos el JSON con los números exactos que espera tu frontend
         return Response({
             'pedidos': pedidos_count,
             'favoritos': favoritos_count,
@@ -61,7 +61,7 @@ class UsuarioStatsView(APIView):
 class UsuariosVistaSet(viewsets.ModelViewSet):
     queryset = usuarios.objects.all()
     serializer_class = UsuariosSerializado
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsStaffOrAdmin]
 
 class MesasVistaSet(viewsets.ModelViewSet):
     queryset = mesas.objects.all()
@@ -121,20 +121,26 @@ class OrdenesVistaSet(viewsets.ModelViewSet):
 class DetallesVistaSet(viewsets.ModelViewSet):
     queryset = detallesOrdenes.objects.all()
     serializer_class = DetallesSerializado
-    permission_classes = [IsAuthenticated]
+    permission_classes = [OrderDetailPermission]
     def get_queryset(self):
         queryset = super().get_queryset()
+        user = self.request.user
+        if user.role == 'cliente':
+            queryset = queryset.filter(orden_fk__cliente_id=user.id)
         orden_fk_id = self.request.query_params.get('orden_fk')
         if orden_fk_id:
-            queryset = queryset.filter(orden_fk_id = orden_fk_id)
+            queryset = queryset.filter(orden_fk_id=orden_fk_id)
         return queryset
 
 class ComentariosVistaSet(viewsets.ModelViewSet):
     queryset = comentarios.objects.all()
     serializer_class = ComentariosSerializado
-    permission_classes = [IsAuthenticatedForWrite]
+    permission_classes = [IsOwnerOrAdmin]
     def get_queryset(self):
         queryset = super().get_queryset()
+        user = self.request.user
+        if user.role == 'cliente':
+            return queryset.filter(usuario_fk_id=user.id)
         usuario_fk_id = self.request.query_params.get('usuario_fk')
         if usuario_fk_id:
             queryset = queryset.filter(usuario_fk_id = usuario_fk_id)
@@ -147,9 +153,12 @@ class ComentariosVistaSet(viewsets.ModelViewSet):
 class FavoritosVistaSet(viewsets.ModelViewSet):
     queryset = favoritos.objects.all()
     serializer_class = favoritosSerializado
-    permission_classes = [IsAuthenticatedForWrite]
+    permission_classes = [IsOwnerOrAdmin]
     def get_queryset(self):
         queryset = super().get_queryset()
+        user = self.request.user
+        if user.role == 'cliente':
+            return queryset.filter(usuario_fk_id=user.id)
         usuario_fk_id = self.request.query_params.get('usuario_fk')
         if usuario_fk_id:
             queryset = queryset.filter(usuario_fk_id = usuario_fk_id)
@@ -161,8 +170,9 @@ class FavoritosVistaSet(viewsets.ModelViewSet):
 
 class RegistroUsuarioVistaSet(generics.CreateAPIView):
     queryset = usuarios.objects.all()
-    serializer_class = UsuariosSerializado
+    serializer_class = RegistroUsuariosSerializado
     permission_classes = []
+    throttle_scope = 'registration'
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

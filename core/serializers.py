@@ -20,7 +20,9 @@ class UsuariosSerializado(serializers.ModelSerializer):
             'is_active'
         ]
         extra_kwargs = {
-            'password':{'write_only':True}
+            'password':{'write_only':True},
+            'role': {'read_only': True},
+            'is_active': {'read_only': True},
         }
     def validate_email(self, value):
         if usuarios.objects.filter(email=value).exists():
@@ -38,6 +40,33 @@ class UsuariosSerializado(serializers.ModelSerializer):
         if password is not None:
             instance.set_password(password)
         return super().update(instance, validated_data)
+
+
+class RegistroUsuariosSerializado(serializers.ModelSerializer):
+    class Meta:
+        model = usuarios
+        fields = [
+            'username',
+            'password',
+            'email',
+            'first_name',
+            'last_name',
+        ]
+        extra_kwargs = {
+            'password': {'write_only': True},
+        }
+    def validate_email(self, value):
+        if usuarios.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Ya existe una cuenta con ese correo electrónico")
+        return value
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        usuario = usuarios(**validated_data)
+        if password is not None:
+            usuario.set_password(password)
+        usuario.is_active = True
+        usuario.save()
+        return usuario
 
 class MesasSerializado(serializers.ModelSerializer):
     id = serializers.UUIDField(format='hex_verbose', read_only=True)
@@ -125,7 +154,18 @@ class DetallesSerializado(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {
             'subtotal': {'read_only': True},
+            'precio': {'read_only': True},
         }
+
+    def create(self, validated_data):
+        producto = validated_data.get('producto_fk')
+        validated_data['precio'] = producto.precio
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        if 'producto_fk' in validated_data:
+            instance.precio = validated_data['producto_fk'].precio
+        return super().update(instance, validated_data)
 
 class ProductosSerializado(serializers.ModelSerializer):
     class Meta:

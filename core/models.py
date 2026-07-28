@@ -42,6 +42,7 @@ class usuarios(AbstractUser):
     activos = ActivosUsuarioManager()
     class Meta:
         db_table = 'usuarios'
+        ordering = ['username']
     def delete(self, *args, **kwargs):
         self.is_active = False
         self.save()
@@ -84,6 +85,7 @@ class categorias(models.Model):
     activos = EstatusBooleanManager()
     class Meta:
         db_table = 'categorias'
+        ordering = ['nombre']
     def delete(self, *args, **kwargs):
         self.estatus = False
         self.save()
@@ -106,6 +108,7 @@ class productos(models.Model):
     activos = EstatusBooleanManager()
     class Meta:
         db_table = 'productos'
+        ordering = ['nombre']
     def delete(self, *args, **kwargs):
         self.estatus = False
         self.save()
@@ -185,6 +188,7 @@ class detallesOrdenes(models.Model):
     activos = EstatusBooleanManager()
     class Meta:
         db_table = 'detalles_ordenes'
+        ordering = ['-id']
     def delete(self, *args, **kwargs):
         self.estatus = False
         self.save()
@@ -215,6 +219,7 @@ class comentarios(models.Model):
     activos = EstatusBooleanManager()
     class Meta:
         db_table = 'comentarios'
+        ordering = ['-id']
     def delete(self, *args, **kwargs):
         self.estatus = False
         self.save()
@@ -231,3 +236,4 @@ class favoritos(models.Model):
     class Meta:
         db_table = 'favoritos'
         unique_together = ('usuario_fk', 'producto_fk')
+        ordering = ['-fecha']
