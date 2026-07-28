@@ -6,17 +6,20 @@ from .utils.utils import tomar_cliente_ip, get_request_actual
 from datetime import datetime
 
 def registrar_en_mongo(sender, instance, accion, usuario='Sistema', request=None):
-    ip = tomar_cliente_ip(request)
-    log_date = {
-        'modelo': sender.__name__,
-        'id_objeto': str(instance.pk),
-        'accion': accion,
-        'usuario': str(usuario),
-        'ip': ip,
-        'fecha': datetime.now(),
-        'data': f"{instance.__dict__}",
-    }
-    logs_colletion.insert_one(log_date)
+    try:
+        ip = tomar_cliente_ip(request)
+        log_date = {
+            'modelo': sender.__name__,
+            'id_objeto': str(instance.pk),
+            'accion': accion,
+            'usuario': str(usuario),
+            'ip': ip,
+            'fecha': datetime.now(),
+            'data': f"{instance.__dict__}",
+        }
+        logs_colletion.insert_one(log_date)
+    except Exception:
+        pass
 
 @receiver(post_save, sender=categorias)
 def auditar_categorias_save(sender, instance, created, **kwargs):
