@@ -323,6 +323,7 @@ class PasswordResetView(APIView):
 
         return Response({'detail': 'Contraseña actualizada exitosamente'}, status=status.HTTP_200_OK)
 
+# Para tomar los estatus y usarlos en el frontend
 
 ESTATUS_COLORES = {
     'eliminado': '#BDBDBD',
@@ -332,7 +333,6 @@ ESTATUS_COLORES = {
     'delivery': '#9C27B0',
     'pagado': '#4CAF50',
 }
-
 
 class EstatusOrdenVista(APIView):
     permission_classes = [AllowAny]
