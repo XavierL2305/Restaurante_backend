@@ -4,24 +4,19 @@ from .models import categorias, ordenes, mesas, productos, usuarios, detallesOrd
 from .utils.bd_mongo import logs_colletion, normalizar_para_mongo
 from .utils.utils import tomar_cliente_ip, get_request_actual
 from datetime import datetime
-import threading
-
 CAMPOS_SENSIBLES = {'password', '_state', 'last_login'}
 
-_estado_anterior = threading.local()
+_estado_anterior = {}
 
 def _obtener_estado_anterior(instance):
-    cache = getattr(_estado_anterior, 'cache', {})
     key = f"{instance.__class__.__name__}_{instance.pk}"
-    return cache.pop(key, None)
+    return _estado_anterior.pop(key, None)
 
 def _guardar_estado_anterior(instance):
     try:
         old = instance.__class__._default_manager.get(pk=instance.pk)
-        if not hasattr(_estado_anterior, 'cache'):
-            _estado_anterior.cache = {}
         key = f"{instance.__class__.__name__}_{instance.pk}"
-        _estado_anterior.cache[key] = old
+        _estado_anterior[key] = old
     except instance.__class__.DoesNotExist:
         pass
 
