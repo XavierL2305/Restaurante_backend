@@ -15,6 +15,7 @@ import logging
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import IsAdminOrReadOnly, IsStaffOrAdmin, IsOwnerOrStaffOrAdmin, IsAuthenticatedForWrite, IsOwnerOrAdmin, OrderPermission, OrderDetailPermission, UserProfilePermission
 from rest_framework import viewsets
+from rest_framework.decorators import action
 
 from .models import usuarios, mesas, categorias, productos, ordenes, detallesOrdenes, comentarios, favoritos
 from .serializers import (
@@ -97,6 +98,19 @@ class ProductosVistaSet(viewsets.ModelViewSet):
         if categoria_fk_id:
             queryset = queryset.filter(categoria_fk_id=categoria_fk_id)
         return queryset
+
+    @action(detail=True, methods=['patch'], permission_classes=[IsAdminOrReadOnly])
+    def restaurar(self, request, pk=None):
+        producto = self.get_object()
+        producto.restaurar()
+        serializer = self.get_serializer(producto)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAdminOrReadOnly])
+    def inactivos(self, request):
+        queryset = productos.objects.filter(estatus=False)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
     
 from rest_framework.filters import SearchFilter
 

@@ -101,7 +101,7 @@ class productos(models.Model):
     nombre = models.CharField(max_length=200)
     descripcion = models.TextField()
     precio = models.DecimalField(max_digits=10, decimal_places=2)
-    categoria_fk = models.ForeignKey(categorias, on_delete=models.CASCADE)
+    categoria_fk = models.ForeignKey(categorias, on_delete=models.PROTECT)
     estatus = models.BooleanField(default=True)
     imagen = models.ImageField(upload_to='productos_media/', null=True, blank=True)
     objects = models.Manager()
@@ -137,11 +137,11 @@ class ordenes(models.Model):
     estatus = models.CharField(max_length=20, choices=ESTATUS_CHOICES, default='pidiendo')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     estatus_anterior = models.CharField(max_length=20, blank=True, default='')
-    mesa_fk = models.ForeignKey(mesas, on_delete=models.CASCADE)
+    mesa_fk = models.ForeignKey(mesas, on_delete=models.RESTRICT)
     monto_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     mesero =models.ForeignKey(
         usuarios,
-        on_delete=models.CASCADE, # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
+        on_delete=models.PROTECT, # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
         related_name='ordenes_asignadas',
         limit_choices_to={'role':'mesero'},
         null=True,
@@ -149,7 +149,7 @@ class ordenes(models.Model):
     )
     cliente = models.ForeignKey(
         usuarios,
-        on_delete=models.CASCADE, # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
+        on_delete=models.PROTECT, # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
         related_name='mis_ordenes',
         limit_choices_to={'role':'cliente'}
     )
@@ -175,7 +175,7 @@ class detallesOrdenes(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     producto_fk = models.ForeignKey(
         productos, 
-        on_delete=models.CASCADE, # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
+        on_delete=models.PROTECT, # Cambiar a models.PROTECTED luego de culminar las pruebas de construccion
         related_name='detalles_en_ordenes'
     )
     precio = models.DecimalField(max_digits=10, decimal_places=2)
@@ -183,7 +183,7 @@ class detallesOrdenes(models.Model):
     nota = models.TextField(max_length=500, blank=True, default='')
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     estatus = models.BooleanField(default=True)
-    orden_fk = models.ForeignKey(ordenes, on_delete=models.CASCADE, related_name='detalles')
+    orden_fk = models.ForeignKey(ordenes, on_delete=models.PROTECT, related_name='detalles')
     objects = models.Manager()
     activos = EstatusBooleanManager()
     class Meta:

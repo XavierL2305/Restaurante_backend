@@ -172,11 +172,27 @@ class ProductosSerializado(serializers.ModelSerializer):
     class Meta:
         model = productos
         fields = '__all__'
+        extra_kwargs = {
+            'estatus': {'required': False},
+        }
+
+    def create(self, validated_data):
+        if 'estatus' not in validated_data:
+            validated_data['estatus'] = True
+        return super().create(validated_data)
 
 class CategoriasSerializado(serializers.ModelSerializer):
     class Meta:
         model = categorias
         fields = '__all__'
+        extra_kwargs = {
+            'estatus': {'required': False},
+        }
+
+    def create(self, validated_data):
+        if 'estatus' not in validated_data:
+            validated_data['estatus'] = True
+        return super().create(validated_data)
 
 
 class ComentariosSerializado(serializers.ModelSerializer):
