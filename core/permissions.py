@@ -105,7 +105,7 @@ class OrderPermission(BasePermission):
 class OrderDetailPermission(BasePermission):
     """
     - Admin/Mesero/Cajero: acceso total.
-    - Cliente: puede leer sus propios detalles y crear nuevos (para sus órdenes).
+    - Cliente: puede leer sus propios detalles y crear/modificar nuevos (para sus órdenes en estado pidiendo).
     """
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
@@ -115,7 +115,7 @@ class OrderDetailPermission(BasePermission):
         if request.user.role == 'cliente':
             if request.method in SAFE_METHODS:
                 return True
-            if request.method == 'POST':
+            if request.method in ('POST', 'PATCH'):
                 return True
             return False
         return False

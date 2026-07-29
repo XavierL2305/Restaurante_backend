@@ -15,7 +15,8 @@ from .views import (
     RegistroUsuarioVistaSet,
     LoginUsuarioVistaSet,
     AuditoriaVista,
-    PasswordResetView
+    PasswordResetView,
+    EstatusOrdenVista
 )
 
 from .views import UsuarioStatsView 
@@ -31,6 +32,7 @@ router.register(r'comentarios', ComentariosVistaSet)
 router.register(r'favoritos', FavoritosVistaSet)
 
 urlpatterns = [
+    path('ordenes/estatus/', EstatusOrdenVista.as_view(), name='estatus_ordenes'),
     path('', include(router.urls)),
     path('auth/google/', GoogleLoginView.as_view(), name='google_login'),
     path('auth/login/', LoginUsuarioVistaSet.as_view(), name='auth_login'),
