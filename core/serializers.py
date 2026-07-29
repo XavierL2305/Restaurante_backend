@@ -25,7 +25,8 @@ class UsuariosSerializado(serializers.ModelSerializer):
             'is_active': {'read_only': True},
         }
     def validate_email(self, value):
-        if usuarios.objects.filter(email=value).exists():
+        user = self.instance
+        if user and usuarios.objects.filter(email=value).exclude(pk=user.pk).exists():
             raise serializers.ValidationError("Ya existe una cuenta con ese correo electrónico")
         return value
     def create(self, validated_data):
