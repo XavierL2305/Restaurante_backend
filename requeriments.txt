@@ -1,6 +1,11 @@
-pip install djangorestframework psycopg2-binary django-cors-headers pillow pymongo
-pip install djangorestframework-simplejwt requests
-pip install python-decouple
-
-
-python manage.py makemigrations core
+Django==6.0.6
+  djangorestframework
+  psycopg2-binary
+  django-cors-headers
+  pillow
+  pymongo
+  djangorestframework-simplejwt
+  requests
+  python-decouple
+  gunicorn
+  whitenoise
