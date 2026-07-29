@@ -12,7 +12,7 @@ from django.conf import settings
 from decouple import config
 
 import logging
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import IsAdminOrReadOnly, IsStaffOrAdmin, IsOwnerOrStaffOrAdmin, IsAuthenticatedForWrite, IsOwnerOrAdmin, OrderPermission, OrderDetailPermission, UserProfilePermission
 from rest_framework import viewsets
 
@@ -322,3 +322,28 @@ class PasswordResetView(APIView):
         user.save()
 
         return Response({'detail': 'Contraseña actualizada exitosamente'}, status=status.HTTP_200_OK)
+
+
+ESTATUS_COLORES = {
+    'eliminado': '#BDBDBD',
+    'pidiendo': '#FF9800',
+    'cocinando': '#F44336',
+    'finalizado': '#2196F3',
+    'delivery': '#9C27B0',
+    'pagado': '#4CAF50',
+}
+
+
+class EstatusOrdenVista(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        estatus = [
+            {
+                'value': choice[0],
+                'label': choice[1],
+                'color': ESTATUS_COLORES.get(choice[0], '#EFEFEF'),
+            }
+            for choice in ordenes.ESTATUS_CHOICES
+        ]
+        return Response(estatus)
