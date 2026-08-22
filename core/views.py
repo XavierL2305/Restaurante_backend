@@ -77,6 +77,23 @@ class UsuariosVistaSet(viewsets.ModelViewSet):
         self.check_object_permissions(self.request, obj)
         return obj
 
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def plato_favorito(self, request, pk=None):
+        from django.db.models import Count
+        resultado = detallesOrdenes.objects.filter(
+            orden_fk__cliente_id=pk,
+            estatus=True
+        ).values('producto_fk__nombre').annotate(
+            total=Count('id')
+        ).order_by('-total').first()
+
+        if resultado:
+            return Response({
+                'nombre': resultado['producto_fk__nombre'],
+                'total': resultado['total']
+            })
+        return Response({'nombre': None, 'total': 0})
+
 class MesasVistaSet(viewsets.ModelViewSet):
     queryset = mesas.objects.all()
     serializer_class = MesasSerializado
@@ -169,6 +186,8 @@ class ComentariosVistaSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
+        if not user.is_authenticated:
+            return queryset.none()
         if user.role == 'cliente':
             return queryset.filter(usuario_fk_id=user.id)
         usuario_fk_id = self.request.query_params.get('usuario_fk')
@@ -183,10 +202,12 @@ class ComentariosVistaSet(viewsets.ModelViewSet):
 class FavoritosVistaSet(viewsets.ModelViewSet):
     queryset = favoritos.objects.all()
     serializer_class = favoritosSerializado
-    permission_classes = [IsOwnerOrAdmin]
+    permission_classes = [IsAuthenticated]
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
+        if not user.is_authenticated:
+            return queryset.none()
         if user.role == 'cliente':
             return queryset.filter(usuario_fk_id=user.id)
         usuario_fk_id = self.request.query_params.get('usuario_fk')

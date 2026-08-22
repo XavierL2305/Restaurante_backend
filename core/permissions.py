@@ -132,6 +132,9 @@ class IsOwnerOrAdmin(BasePermission):
     """
     El dueño del recurso o un admin pueden acceder.
     """
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated
+
     def has_object_permission(self, request, view, obj):
         if request.user.role == 'admin':
             return True

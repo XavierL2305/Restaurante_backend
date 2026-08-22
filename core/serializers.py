@@ -209,9 +209,11 @@ class ComentariosSerializado(serializers.ModelSerializer):
         ]
 
 class favoritosSerializado(serializers.ModelSerializer):
+    producto_info = ProductosSerializado(source='producto_fk', read_only=True)
+
     class Meta:
         model = favoritos
-        fields = '__all__'
+        fields = ['id', 'usuario_fk', 'producto_fk', 'fecha', 'producto_info']
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     #Este es un serializador para permitir el inicio de sesion con username o con email
