@@ -17,7 +17,7 @@ from .permissions import IsAdminOrReadOnly, IsStaffOrAdmin, IsOwnerOrStaffOrAdmi
 from rest_framework import viewsets
 from rest_framework.decorators import action
 
-from .models import usuarios, mesas, categorias, productos, ordenes, detallesOrdenes, comentarios, favoritos
+from .models import usuarios, mesas, categorias, productos, ordenes, detallesOrdenes, comentarios, favoritos, comandasPersonalizadas, detalleComandaPersonalizada
 from .serializers import (
     UsuariosSerializado,
     RegistroUsuariosSerializado,
@@ -28,6 +28,8 @@ from .serializers import (
     DetallesSerializado,
     ComentariosSerializado,
     favoritosSerializado,
+    ComandaPersonalizadaSerializado,
+    DetalleComandaPersonalizadaSerializado,
 
     CustomTokenObtainPairSerializer
 )
@@ -361,3 +363,92 @@ class EstatusOrdenVista(APIView):
             for choice in ordenes.ESTATUS_CHOICES
         ]
         return Response(estatus)
+
+
+class ComandasPersonalizadasVistaSet(viewsets.ModelViewSet):
+    queryset = comandasPersonalizadas.objects.all()
+    serializer_class = ComandaPersonalizadaSerializado
+    permission_classes = [IsOwnerOrAdmin]
+
+    def get_queryset(self):
+        queryset = comandasPersonalizadas.objects.filter(estatus=True)
+        user = self.request.user
+        if user.role == 'cliente':
+            return queryset.filter(usuario_fk_id=user.id)
+        return queryset
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def crear_orden(self, request, pk=None):
+        comanda = self.get_object()
+        mesa_id = request.data.get('mesa_id')
+
+        if not mesa_id:
+            return Response({'error': 'Se requiere una mesa'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            mesa = mesas.objects.get(id=mesa_id)
+        except mesas.DoesNotExist:
+            return Response({'error': 'Mesa no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+        if mesa.estatus != 'disponible':
+            return Response({'error': 'La mesa no está disponible'}, status=status.HTTP_400_BAD_REQUEST)
+
+        mesa.estatus = 'ocupado'
+        mesa.save()
+
+        orden = ordenes.objects.create(
+            estatus='pidiendo',
+            mesa_fk=mesa,
+            cliente=request.user,
+        )
+
+        for detalle in comanda.detalles.all():
+            detallesOrdenes.objects.create(
+                orden_fk=orden,
+                producto_fk=detalle.producto_fk,
+                precio=detalle.producto_fk.precio,
+                cantidad=detalle.cantidad,
+                nota=detalle.nota,
+            )
+
+        serializer = OrdenesSerializado(orden)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def guardar_desde_orden(self, request):
+        orden_id = request.data.get('orden_id')
+        nombre = request.data.get('nombre', '').strip()
+
+        if not orden_id:
+            return Response({'error': 'Se requiere orden_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not nombre:
+            return Response({'error': 'Se requiere un nombre para la comanda'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            orden = ordenes.objects.get(id=orden_id)
+        except ordenes.DoesNotExist:
+            return Response({'error': 'Orden no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user.role == 'cliente' and str(orden.cliente_id) != str(request.user.id):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
+
+        detalles = detallesOrdenes.objects.filter(orden_fk=orden, estatus=True)
+        if not detalles.exists():
+            return Response({'error': 'La orden no tiene productos'}, status=status.HTTP_400_BAD_REQUEST)
+
+        comanda = comandasPersonalizadas.objects.create(
+            nombre=nombre,
+            usuario_fk=request.user,
+        )
+
+        for detalle in detalles:
+            detalleComandaPersonalizada.objects.create(
+                comanda_fk=comanda,
+                producto_fk=detalle.producto_fk,
+                cantidad=detalle.cantidad,
+                nota=detalle.nota,
+            )
+
+        serializer = ComandaPersonalizadaSerializado(comanda)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

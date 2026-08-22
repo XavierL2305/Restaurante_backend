@@ -238,6 +238,36 @@ class comentarios(models.Model):
     def __str__(self):
         return f"Comentario {str(self.id)[:8]}... Usuario {str(self.usuario_fk.id)[:8]}: {self.usuario_fk.username}... - Producto {str(self.producto_fk.id)[:8]}"
 
+class comandasPersonalizadas(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nombre = models.CharField(max_length=100)
+    usuario_fk = models.ForeignKey(usuarios, on_delete=models.CASCADE, related_name='mis_comandas')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    estatus = models.BooleanField(default=True)
+    objects = models.Manager()
+    activos = EstatusBooleanManager()
+    class Meta:
+        db_table = 'comandas_personalizadas'
+        ordering = ['-fecha_creacion']
+    def delete(self, *args, **kwargs):
+        self.estatus = False
+        self.save()
+    def restaurar(self):
+        self.estatus = True
+        self.save()
+    def __str__(self):
+        return f"Comanda {self.nombre} - {self.usuario_fk.username}"
+
+class detalleComandaPersonalizada(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    comanda_fk = models.ForeignKey(comandasPersonalizadas, on_delete=models.CASCADE, related_name='detalles')
+    producto_fk = models.ForeignKey(productos, on_delete=models.PROTECT)
+    cantidad = models.PositiveIntegerField(default=1)
+    nota = models.TextField(max_length=500, blank=True, default='')
+    objects = models.Manager()
+    class Meta:
+        db_table = 'detalles_comanda_personalizada'
+
 class favoritos(models.Model):
     usuario_fk = models.ForeignKey(usuarios, on_delete=models.CASCADE)
     producto_fk = models.ForeignKey(productos, on_delete=models.CASCADE)

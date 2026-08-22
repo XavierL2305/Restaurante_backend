@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import usuarios, mesas, ordenes, productos, categorias, detallesOrdenes, comentarios, favoritos
+from .models import usuarios, mesas, ordenes, productos, categorias, detallesOrdenes, comentarios, favoritos, comandasPersonalizadas, detalleComandaPersonalizada
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
@@ -253,3 +253,60 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         attrs['username'] = user.username
         return super().validate(attrs)
+
+
+class DetalleComandaPersonalizadaSerializado(serializers.ModelSerializer):
+    producto_nombre = serializers.CharField(source='producto_fk.nombre', read_only=True)
+    producto_precio = serializers.DecimalField(source='producto_fk.precio', max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = detalleComandaPersonalizada
+        fields = ['id', 'producto_fk', 'producto_nombre', 'producto_precio', 'cantidad', 'nota']
+
+
+class ComandaPersonalizadaSerializado(serializers.ModelSerializer):
+    detalles = DetalleComandaPersonalizadaSerializado(many=True, read_only=True)
+    usuario_nombre = serializers.CharField(source='usuario_fk.first_name', read_only=True)
+    total_productos = serializers.SerializerMethodField()
+
+    class Meta:
+        model = comandasPersonalizadas
+        fields = ['id', 'nombre', 'usuario_fk', 'usuario_nombre', 'fecha_creacion', 'estatus', 'detalles', 'total_productos']
+        extra_kwargs = {
+            'usuario_fk': {'read_only': True},
+            'estatus': {'read_only': True},
+        }
+
+    def get_total_productos(self, obj):
+        return obj.detalles.count()
+
+    def create(self, validated_data):
+        detalles_data = self.context['request'].data.get('detalles', [])
+        usuario = self.context['request'].user
+        validated_data['usuario_fk'] = usuario
+        comanda = comandasPersonalizadas.objects.create(**validated_data)
+        for detalle_data in detalles_data:
+            producto = productos.objects.get(id=detalle_data['producto_fk'])
+            detalleComandaPersonalizada.objects.create(
+                comanda_fk=comanda,
+                producto_fk=producto,
+                cantidad=detalle_data.get('cantidad', 1),
+                nota=detalle_data.get('nota', '')
+            )
+        return comanda
+
+    def update(self, instance, validated_data):
+        detalles_data = self.context['request'].data.get('detalles', None)
+        instance.nombre = validated_data.get('nombre', instance.nombre)
+        instance.save()
+        if detalles_data is not None:
+            instance.detalles.all().delete()
+            for detalle_data in detalles_data:
+                producto = productos.objects.get(id=detalle_data['producto_fk'])
+                detalleComandaPersonalizada.objects.create(
+                    comanda_fk=instance,
+                    producto_fk=producto,
+                    cantidad=detalle_data.get('cantidad', 1),
+                    nota=detalle_data.get('nota', '')
+                )
+        return instance

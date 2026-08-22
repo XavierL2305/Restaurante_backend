@@ -144,16 +144,16 @@ class Command(BaseCommand):
         self.stdout.write('Creando usuarios...')
         us1 = usuarios.objects.create(
             is_superuser = False,
-            username = 'HolasoyMundo',
-            first_name = 'Hola',
-            last_name = 'Mundo',
-            email = 'holamundo@hotmail.com',
+            username = 'UserClient',
+            first_name = 'User',
+            last_name = 'Client',
+            email = 'userclient@hotmail.com',
             is_staff = False,
             is_active = True,
             role = 'cliente',
             imagen = 'usuarios_media/usuario1.webp'
         )
-        us1.set_password('HolaMundo18')
+        us1.set_password('UserClient123456')
         us1.save()
         us2 = usuarios.objects.create(
             is_superuser = False,

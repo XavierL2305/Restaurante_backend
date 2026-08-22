@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import (
     usuarios, mesas, categorias, productos,
-    ordenes, detallesOrdenes, comentarios, favoritos
+    ordenes, detallesOrdenes, comentarios, favoritos,
+    comandasPersonalizadas, detalleComandaPersonalizada
 )
 
 
@@ -61,3 +62,17 @@ class ComentariosAdmin(admin.ModelAdmin):
 class FavoritosAdmin(admin.ModelAdmin):
     list_display = ('id', 'usuario_fk', 'producto_fk')
     raw_id_fields = ('usuario_fk', 'producto_fk')
+
+
+@admin.register(comandasPersonalizadas)
+class ComandasPersonalizadasAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nombre', 'usuario_fk', 'fecha_creacion', 'estatus')
+    list_filter = ('estatus',)
+    search_fields = ('nombre', 'usuario_fk__email')
+    raw_id_fields = ('usuario_fk',)
+
+
+@admin.register(detalleComandaPersonalizada)
+class DetalleComandaPersonalizadaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'comanda_fk', 'producto_fk', 'cantidad', 'nota')
+    raw_id_fields = ('comanda_fk', 'producto_fk')

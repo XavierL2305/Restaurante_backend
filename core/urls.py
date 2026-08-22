@@ -11,6 +11,7 @@ from .views import (
     DetallesVistaSet,
     ComentariosVistaSet,
     FavoritosVistaSet,
+    ComandasPersonalizadasVistaSet,
 
     RegistroUsuarioVistaSet,
     LoginUsuarioVistaSet,
@@ -30,6 +31,7 @@ router.register(r'ordenes', OrdenesVistaSet)
 router.register(r'detalles', DetallesVistaSet)
 router.register(r'comentarios', ComentariosVistaSet)
 router.register(r'favoritos', FavoritosVistaSet)
+router.register(r'comandas-personalizadas', ComandasPersonalizadasVistaSet)
 
 urlpatterns = [
     path('ordenes/estatus/', EstatusOrdenVista.as_view(), name='estatus_ordenes'),
