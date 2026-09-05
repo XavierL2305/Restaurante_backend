@@ -161,4 +161,11 @@ class UserProfilePermission(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.user.role == 'admin':
             return True
-        return obj.id == request.user.id
+        if obj.id != request.user.id:
+            return False
+        if request.method in ('PUT', 'PATCH'):
+            allowed_fields = {'username', 'email', 'first_name', 'last_name', 'imagen', 'password'}
+            sent_fields = set(request.data.keys())
+            if not sent_fields.issubset(allowed_fields):
+                return False
+        return True
